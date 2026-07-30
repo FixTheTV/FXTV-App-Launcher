@@ -6,6 +6,7 @@ namespace FXTVGame.Launcher.Forms
     public partial class LoginForm : Form
     {
         private readonly AuthService authService = new AuthService();
+        public string LoginUser { get; private set; } = string.Empty;
 
         public LoginForm()
         {
@@ -28,6 +29,7 @@ namespace FXTVGame.Launcher.Forms
             }
 
             MessageBox.Show(authResult.Message);
+            LoginUser = authResult.Username;
             DialogResult = DialogResult.OK;
             Close();
         }

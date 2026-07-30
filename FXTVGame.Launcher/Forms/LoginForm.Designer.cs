@@ -67,7 +67,7 @@
             // 
             password_textbox.Location = new Point(378, 308);
             password_textbox.Name = "password_textbox";
-            password_textbox.PlaceholderText = "Enter passwrord";
+            password_textbox.PlaceholderText = "Enter password";
             password_textbox.Size = new Size(125, 27);
             password_textbox.TabIndex = 4;
             password_textbox.UseSystemPasswordChar = true;

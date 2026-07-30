@@ -15,22 +15,36 @@ namespace FXTVGame.Launcher.Services.Auth
 
         public AuthResult Login(string username, string password)
         {
-            bool userExists = databaseService.UserExists(username, password);
+            var checkUserExists = databaseService.CheckIfUserExistsAndGetId(username);
 
-            if (userExists)
+            if (checkUserExists.SearchResult)
+            {
+                if (databaseService.CheckPassword(checkUserExists.UserId, password))
+                {
+                    return new AuthResult
+                    {
+                        Success = true,
+                        Message = "Login successful.",
+                        UserId = checkUserExists.UserId,
+                        Username = username
+                    };
+                }
+                return new AuthResult
+                {
+                    Success = false,
+                    Message = "Incorrect username or password."
+                };
+                
+            }
+            else
             {
                 return new AuthResult
                 {
-                    Success = true,
-                    Message = "Login successful."
+                    Success = false,
+                    Message = "You don't have an existing account."
                 };
             }
-
-            return new AuthResult
-            {
-                Success = false,
-                Message = "Incorrect username or password."
-            };
+                      
         }
     }
 }

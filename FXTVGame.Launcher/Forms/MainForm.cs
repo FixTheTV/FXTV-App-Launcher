@@ -1,4 +1,6 @@
-﻿namespace FXTVGame.Launcher.Forms
+﻿using FXTVGame.Launcher.Services.Auth;
+
+namespace FXTVGame.Launcher.Forms
 {
     public partial class MainForm : Form
     {
@@ -13,7 +15,8 @@
 
             if (loginForm.ShowDialog() == DialogResult.OK)
             {
-                enter_login_button.Text = "MISSION COMPLETE";
+                string username = loginForm.LoginUser;
+                enter_login_button.Text = $"Hello user {username}";
             }
         }
     }
