@@ -1,0 +1,7 @@
+.vs/
+
+FXTVGame.Launcher/bin/
+FXTVGame.Launcher/obj/
+
+
+FXTVGame.Launcher/*.csproj.user

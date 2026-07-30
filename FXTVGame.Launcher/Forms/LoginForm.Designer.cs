@@ -1,0 +1,100 @@
+﻿namespace FXTVGame.Launcher.Forms
+{
+    partial class LoginForm
+    {
+        private System.ComponentModel.IContainer components = null;
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        ///  Required method for Designer support - do not modify
+        ///  the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            login_button = new Button();
+            username_label = new Label();
+            password_label = new Label();
+            username_textbox = new TextBox();
+            password_textbox = new TextBox();
+            SuspendLayout();
+            // 
+            // login_button
+            // 
+            login_button.Location = new Point(297, 360);
+            login_button.Name = "login_button";
+            login_button.Size = new Size(234, 40);
+            login_button.TabIndex = 0;
+            login_button.Text = "LOGIN";
+            login_button.UseVisualStyleBackColor = true;
+            login_button.Click += btnLogin_Click;
+            // 
+            // username_label
+            // 
+            username_label.AutoSize = true;
+            username_label.Location = new Point(297, 268);
+            username_label.Name = "username_label";
+            username_label.Size = new Size(75, 20);
+            username_label.TabIndex = 1;
+            username_label.Text = "Username";
+            // 
+            // password_label
+            // 
+            password_label.AutoSize = true;
+            password_label.Location = new Point(297, 308);
+            password_label.Name = "password_label";
+            password_label.Size = new Size(70, 20);
+            password_label.TabIndex = 2;
+            password_label.Text = "Password";
+            // 
+            // username_textbox
+            // 
+            username_textbox.Location = new Point(378, 268);
+            username_textbox.Name = "username_textbox";
+            username_textbox.PlaceholderText = "Enter username";
+            username_textbox.Size = new Size(125, 27);
+            username_textbox.TabIndex = 3;
+            // 
+            // password_textbox
+            // 
+            password_textbox.Location = new Point(378, 308);
+            password_textbox.Name = "password_textbox";
+            password_textbox.PlaceholderText = "Enter passwrord";
+            password_textbox.Size = new Size(125, 27);
+            password_textbox.TabIndex = 4;
+            password_textbox.UseSystemPasswordChar = true;
+            // 
+            // LoginForm
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.SteelBlue;
+            ClientSize = new Size(800, 450);
+            Controls.Add(password_textbox);
+            Controls.Add(login_button);
+            Controls.Add(username_textbox);
+            Controls.Add(password_label);
+            Controls.Add(username_label);
+            Name = "LoginForm";
+            Text = "Login Form";
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        #endregion
+
+        private Button login_button;
+        private Label username_label;
+        private Label password_label;
+        private TextBox username_textbox;
+        private TextBox password_textbox;
+    }
+}
