@@ -1,4 +1,4 @@
-﻿namespace FXTVGame.Launcher.Forms
+namespace FXTVGame.Launcher.Forms
 {
     partial class MainForm
     {
@@ -28,18 +28,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            enter_login_button = new Button();
+            contentPanel = new Panel();
             SuspendLayout();
             // 
-            // enter_login_button
+            // contentPanel
             // 
-            enter_login_button.Location = new Point(294, 248);
-            enter_login_button.Name = "enter_login_button";
-            enter_login_button.Size = new Size(167, 29);
-            enter_login_button.TabIndex = 0;
-            enter_login_button.Text = "GOTO LOGIN";
-            enter_login_button.UseVisualStyleBackColor = true;
-            enter_login_button.Click += btnEnterLogin_Click;
+            contentPanel.Dock = DockStyle.Fill;
+            contentPanel.Location = new Point(0, 0);
+            contentPanel.Name = "contentPanel";
+            contentPanel.Size = new Size(800, 450);
+            contentPanel.TabIndex = 0;
             // 
             // MainForm
             // 
@@ -47,7 +45,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ActiveCaption;
             ClientSize = new Size(800, 450);
-            Controls.Add(enter_login_button);
+            Controls.Add(contentPanel);
             Name = "MainForm";
             Text = "Main Form";
             ResumeLayout(false);
@@ -55,6 +53,6 @@
 
         #endregion
 
-        private Button enter_login_button;
+        private Panel contentPanel;
     }
 }

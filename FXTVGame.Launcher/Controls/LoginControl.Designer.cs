@@ -1,8 +1,9 @@
-﻿namespace FXTVGame.Launcher.Forms
+namespace FXTVGame.Launcher.Controls
 {
-    partial class LoginForm
+    partial class LoginControl
     {
         private System.ComponentModel.IContainer components = null;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -12,12 +13,8 @@
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
+        #region Component Designer generated code
 
-        /// <summary>
-        ///  Required method for Designer support - do not modify
-        ///  the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             login_button = new Button();
@@ -32,7 +29,7 @@
             login_button.Location = new Point(297, 360);
             login_button.Name = "login_button";
             login_button.Size = new Size(234, 40);
-            login_button.TabIndex = 0;
+            login_button.TabIndex = 4;
             login_button.Text = "LOGIN";
             login_button.UseVisualStyleBackColor = true;
             login_button.Click += btnLogin_Click;
@@ -43,7 +40,7 @@
             username_label.Location = new Point(297, 268);
             username_label.Name = "username_label";
             username_label.Size = new Size(75, 20);
-            username_label.TabIndex = 1;
+            username_label.TabIndex = 0;
             username_label.Text = "Username";
             // 
             // password_label
@@ -61,7 +58,7 @@
             username_textbox.Name = "username_textbox";
             username_textbox.PlaceholderText = "Enter username";
             username_textbox.Size = new Size(125, 27);
-            username_textbox.TabIndex = 3;
+            username_textbox.TabIndex = 1;
             // 
             // password_textbox
             // 
@@ -69,22 +66,21 @@
             password_textbox.Name = "password_textbox";
             password_textbox.PlaceholderText = "Enter password";
             password_textbox.Size = new Size(125, 27);
-            password_textbox.TabIndex = 4;
+            password_textbox.TabIndex = 3;
             password_textbox.UseSystemPasswordChar = true;
             // 
-            // LoginForm
+            // LoginControl
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SteelBlue;
-            ClientSize = new Size(800, 450);
             Controls.Add(password_textbox);
             Controls.Add(login_button);
             Controls.Add(username_textbox);
             Controls.Add(password_label);
             Controls.Add(username_label);
-            Name = "LoginForm";
-            Text = "Login Form";
+            Name = "LoginControl";
+            Size = new Size(800, 450);
             ResumeLayout(false);
             PerformLayout();
         }

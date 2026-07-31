@@ -1,14 +1,15 @@
 using FXTVGame.Launcher.Models.Auth;
 using FXTVGame.Launcher.Services.Auth;
 
-namespace FXTVGame.Launcher.Forms
+namespace FXTVGame.Launcher.Controls
 {
-    public partial class LoginForm : Form
+    public partial class LoginControl : UserControl
     {
         private readonly AuthService authService = new AuthService();
-        public string LoginUser { get; private set; } = string.Empty;
 
-        public LoginForm()
+        public event Action<string>? LoginSucceeded;
+
+        public LoginControl()
         {
             InitializeComponent();
         }
@@ -28,10 +29,8 @@ namespace FXTVGame.Launcher.Forms
                 return;
             }
 
-            MessageBox.Show(authResult.Message);
-            LoginUser = authResult.Username;
-            DialogResult = DialogResult.OK;
-            Close();
+            LoginSucceeded?.Invoke(authResult.Username);
         }
     }
 }
+

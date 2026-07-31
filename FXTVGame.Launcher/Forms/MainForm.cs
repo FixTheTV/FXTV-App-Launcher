@@ -1,4 +1,4 @@
-﻿using FXTVGame.Launcher.Services.Auth;
+using FXTVGame.Launcher.Controls;
 
 namespace FXTVGame.Launcher.Forms
 {
@@ -7,17 +7,31 @@ namespace FXTVGame.Launcher.Forms
         public MainForm()
         {
             InitializeComponent();
+            ShowLogin();
         }
 
-        private void btnEnterLogin_Click(object sender, EventArgs e)
+        private void ShowLogin()
         {
-            LoginForm loginForm = new LoginForm();
+            var loginControl = new LoginControl();
+            loginControl.LoginSucceeded += ShowHome;
 
-            if (loginForm.ShowDialog() == DialogResult.OK)
-            {
-                string username = loginForm.LoginUser;
-                enter_login_button.Text = $"Hello user {username}";
-            }
+            ShowScreen(loginControl);
+        }
+
+        private void ShowHome(string username)
+        {
+            var homeControl = new HomeControl(username);
+            homeControl.LogoutRequested += ShowLogin;
+
+            ShowScreen(homeControl);
+        }
+
+        private void ShowScreen(UserControl screen)
+        {
+            contentPanel.Controls.Clear();
+            screen.Dock = DockStyle.Fill;
+            contentPanel.Controls.Add(screen);
         }
     }
 }
+
