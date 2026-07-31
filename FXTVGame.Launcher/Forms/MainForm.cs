@@ -7,7 +7,7 @@ namespace FXTVGame.Launcher.Forms
         public MainForm()
         {
             InitializeComponent();
-            ShowLogin();
+            ShowMain();
         }
 
         private void ShowLogin()
@@ -21,9 +21,26 @@ namespace FXTVGame.Launcher.Forms
         private void ShowHome(string username)
         {
             var homeControl = new HomeControl(username);
-            homeControl.LogoutRequested += ShowLogin;
+            homeControl.LogoutRequested += ShowMain;
 
             ShowScreen(homeControl);
+        }
+
+        private void ShowMain()
+        {
+            var mainControl = new MainControl();
+            mainControl.GoToLoginRequested += ShowLogin;
+            mainControl.GoToRegRequested += ShowRegister;
+
+            ShowScreen(mainControl);
+        }
+
+        private void ShowRegister()
+        {
+            var registerControl = new RegisterControl();
+            registerControl.RegisterSucceed += ShowMain;
+
+            ShowScreen(registerControl);
         }
 
         private void ShowScreen(UserControl screen)

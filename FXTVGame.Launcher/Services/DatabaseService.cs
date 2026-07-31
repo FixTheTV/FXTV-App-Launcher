@@ -1,11 +1,13 @@
 ﻿using FXTVGame.Launcher.Models.Database;
 using Microsoft.Data.Sqlite;
+using System.Runtime.CompilerServices;
 
 namespace FXTVGame.Launcher.Services.Database
 {
     public class DatabaseService
     {
         private readonly string connectionString = "Data Source=UserAuth.db;";
+
 
         public void Initialize()
         {
@@ -29,22 +31,22 @@ namespace FXTVGame.Launcher.Services.Database
 
         public void AddUser(string username, string password)
         {
-            using (var connection = new SqliteConnection(connectionString))
-            {
-                connection.Open();
-
-                using (var addUserCmd = connection.CreateCommand())
+                using (var connection = new SqliteConnection(connectionString))
                 {
-                    addUserCmd.CommandText = @"
+                    connection.Open();
+
+                    using (var addUserCmd = connection.CreateCommand())
+                    {
+                        addUserCmd.CommandText = @"
                     INSERT OR IGNORE INTO Users (username, password)
                     VALUES ($username, $password);";
 
-                    addUserCmd.Parameters.AddWithValue("$username", username);
-                    addUserCmd.Parameters.AddWithValue("$password", password);
+                        addUserCmd.Parameters.AddWithValue("$username", username);
+                        addUserCmd.Parameters.AddWithValue("$password", password);
 
-                    addUserCmd.ExecuteNonQuery();
+                        addUserCmd.ExecuteNonQuery();
+                    }
                 }
-            }
         }
 
         public DatabaseCheckResult CheckIfUserExistsAndGetId(string username)
@@ -102,14 +104,12 @@ namespace FXTVGame.Launcher.Services.Database
                     }
 
                     return Convert.ToString(result) == password;
-                    
 
-                    
+
+
                 }
             }
 
         }
-
-
     }
 }

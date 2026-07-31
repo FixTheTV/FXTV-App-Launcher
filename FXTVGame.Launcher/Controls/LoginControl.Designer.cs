@@ -22,6 +22,7 @@ namespace FXTVGame.Launcher.Controls
             password_label = new Label();
             username_textbox = new TextBox();
             password_textbox = new TextBox();
+
             SuspendLayout();
             // 
             // login_button
@@ -84,13 +85,14 @@ namespace FXTVGame.Launcher.Controls
             ResumeLayout(false);
             PerformLayout();
         }
-
-        #endregion
-
+        
         private Button login_button;
         private Label username_label;
         private Label password_label;
         private TextBox username_textbox;
         private TextBox password_textbox;
+
+        #endregion
+
     }
 }
