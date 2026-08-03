@@ -42,7 +42,6 @@ namespace FXTVGame.Launcher.Forms
 
             ShowScreen(registerControl);
         }
-
         private void ShowScreen(UserControl screen)
         {
             contentPanel.Controls.Clear();

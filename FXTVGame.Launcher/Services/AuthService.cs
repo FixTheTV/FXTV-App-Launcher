@@ -9,7 +9,6 @@ namespace FXTVGame.Launcher.Services.Auth
 
         public AuthService()
         {
-            databaseService.Initialize();
         }
 
         public AuthResult Login(string username, string password)

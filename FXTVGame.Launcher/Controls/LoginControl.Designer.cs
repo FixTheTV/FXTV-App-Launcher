@@ -22,15 +22,15 @@ namespace FXTVGame.Launcher.Controls
             password_label = new Label();
             username_textbox = new TextBox();
             password_textbox = new TextBox();
-
+            remember_me_checkbox = new CheckBox();
             SuspendLayout();
             // 
             // login_button
             // 
-            login_button.Location = new Point(297, 360);
+            login_button.Location = new Point(297, 371);
             login_button.Name = "login_button";
             login_button.Size = new Size(234, 40);
-            login_button.TabIndex = 4;
+            login_button.TabIndex = 5;
             login_button.Text = "LOGIN";
             login_button.UseVisualStyleBackColor = true;
             login_button.Click += btnLogin_Click;
@@ -70,12 +70,23 @@ namespace FXTVGame.Launcher.Controls
             password_textbox.TabIndex = 3;
             password_textbox.UseSystemPasswordChar = true;
             // 
+            // remember_me_checkbox
+            // 
+            remember_me_checkbox.AutoSize = true;
+            remember_me_checkbox.Location = new Point(346, 341);
+            remember_me_checkbox.Name = "remember_me_checkbox";
+            remember_me_checkbox.Size = new Size(129, 24);
+            remember_me_checkbox.TabIndex = 4;
+            remember_me_checkbox.Text = "Remember me";
+            remember_me_checkbox.UseVisualStyleBackColor = true;
+            // 
             // LoginControl
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SteelBlue;
             Controls.Add(password_textbox);
+            Controls.Add(remember_me_checkbox);
             Controls.Add(login_button);
             Controls.Add(username_textbox);
             Controls.Add(password_label);
@@ -85,12 +96,13 @@ namespace FXTVGame.Launcher.Controls
             ResumeLayout(false);
             PerformLayout();
         }
-        
+
         private Button login_button;
         private Label username_label;
         private Label password_label;
         private TextBox username_textbox;
         private TextBox password_textbox;
+        private CheckBox remember_me_checkbox;
 
         #endregion
 

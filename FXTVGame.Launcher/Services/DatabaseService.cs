@@ -1,6 +1,5 @@
 ﻿using FXTVGame.Launcher.Models.Database;
 using Microsoft.Data.Sqlite;
-using System.Runtime.CompilerServices;
 
 namespace FXTVGame.Launcher.Services.Database
 {
@@ -8,6 +7,10 @@ namespace FXTVGame.Launcher.Services.Database
     {
         private readonly string connectionString = "Data Source=UserAuth.db;";
 
+        public DatabaseService()
+        {
+            Initialize();
+        }
 
         public void Initialize()
         {
@@ -29,8 +32,10 @@ namespace FXTVGame.Launcher.Services.Database
             }
         }
 
-        public void AddUser(string username, string password)
+        public bool AddUser(string username, string password)
         {
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+
                 using (var connection = new SqliteConnection(connectionString))
                 {
                     connection.Open();
@@ -42,9 +47,9 @@ namespace FXTVGame.Launcher.Services.Database
                     VALUES ($username, $password);";
 
                         addUserCmd.Parameters.AddWithValue("$username", username);
-                        addUserCmd.Parameters.AddWithValue("$password", password);
+                        addUserCmd.Parameters.AddWithValue("$password", passwordHash);
 
-                        addUserCmd.ExecuteNonQuery();
+                        return addUserCmd.ExecuteNonQuery() > 0;
                     }
                 }
         }
@@ -103,10 +108,16 @@ namespace FXTVGame.Launcher.Services.Database
                         return false;
                     }
 
-                    return Convert.ToString(result) == password;
+                    string passwordHash = Convert.ToString(result) ?? string.Empty;
 
-
-
+                    try
+                    {
+                        return BCrypt.Net.BCrypt.Verify(password, passwordHash);
+                    }
+                    catch (BCrypt.Net.SaltParseException)
+                    {
+                        return false;
+                    }
                 }
             }
 

@@ -35,9 +35,19 @@ namespace FXTVGame.Launcher.Controls
             if (check.Success)
             {
                 DatabaseService database = new DatabaseService();
-                database.AddUser(usernameField, passwordField);
-                MessageBox.Show(check.Message);
-                RegisterSucceed?.Invoke();
+                bool userAdded = database.AddUser(usernameField, passwordField);
+
+                if (userAdded)
+                {
+                    MessageBox.Show(check.Message);
+                    RegisterSucceed?.Invoke();
+                }
+                else
+                {
+                    username_warning_label.Text = "Username already taken.";
+                    username_textbox.Clear();
+                    username_textbox.Focus();
+                }
             }
             else
             {
