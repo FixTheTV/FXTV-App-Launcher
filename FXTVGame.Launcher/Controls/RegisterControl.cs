@@ -30,7 +30,7 @@ namespace FXTVGame.Launcher.Controls
             string passwordField = password_textbox.Text;
             string repasswordField = retype_password_textbox.Text;
 
-            var check = regService.ValidateRegForm(usernameField,passwordField,repasswordField);
+            var check = regService.ValidateRegForm(usernameField, passwordField, repasswordField);
 
             if (check.Success)
             {
@@ -53,26 +53,27 @@ namespace FXTVGame.Launcher.Controls
             {
                 switch (check.FormSlot)
                 {
-                    case 0: 
+                    case 0:
                         username_warning_label.Text = check.Message;
                         username_textbox.Clear();
                         username_textbox.Focus();
                         break;
-                    case 1: 
+                    case 1:
                         pass_warn_label.Text = check.Message;
                         password_textbox.Clear();
-                        password_textbox.Focus(); 
+                        password_textbox.Focus();
                         break;
-                    case 2: 
+                    case 2:
                         retype_pass_warn_label.Text = check.Message;
                         retype_password_textbox.Clear();
                         retype_password_textbox.Focus();
                         break;
                 }
             }
-            
-            
+
+
         }
+
 
     }
 }

@@ -28,6 +28,7 @@ namespace FXTVGame.Launcher.Forms
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             contentPanel = new Panel();
             SuspendLayout();
             // 
@@ -46,8 +47,9 @@ namespace FXTVGame.Launcher.Forms
             BackColor = SystemColors.ActiveCaption;
             ClientSize = new Size(800, 450);
             Controls.Add(contentPanel);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MainForm";
-            Text = "Main Form";
+            Text = "FXTV Game Launcher";
             ResumeLayout(false);
         }
 

@@ -25,7 +25,7 @@ namespace FXTVGame.Launcher.Controls
             // 
             welcome_label.AutoSize = true;
             welcome_label.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
-            welcome_label.Location = new Point(292, 175);
+            welcome_label.Location = new Point(147, 87);
             welcome_label.Name = "welcome_label";
             welcome_label.Size = new Size(206, 41);
             welcome_label.TabIndex = 0;
@@ -33,7 +33,7 @@ namespace FXTVGame.Launcher.Controls
             // 
             // logout_button
             // 
-            logout_button.Location = new Point(329, 242);
+            logout_button.Location = new Point(179, 157);
             logout_button.Name = "logout_button";
             logout_button.Size = new Size(142, 36);
             logout_button.TabIndex = 1;
@@ -49,7 +49,7 @@ namespace FXTVGame.Launcher.Controls
             Controls.Add(logout_button);
             Controls.Add(welcome_label);
             Name = "HomeControl";
-            Size = new Size(800, 450);
+            Size = new Size(500, 300);
             ResumeLayout(false);
             PerformLayout();
         }

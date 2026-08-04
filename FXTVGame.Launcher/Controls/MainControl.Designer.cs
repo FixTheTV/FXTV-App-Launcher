@@ -30,7 +30,7 @@
             // 
             // login_button
             // 
-            login_button.Location = new Point(316, 200);
+            login_button.Location = new Point(93, 156);
             login_button.Name = "login_button";
             login_button.Size = new Size(142, 36);
             login_button.TabIndex = 1;
@@ -40,7 +40,7 @@
             // 
             // register_button
             // 
-            register_button.Location = new Point(316, 268);
+            register_button.Location = new Point(93, 208);
             register_button.Name = "register_button";
             register_button.Size = new Size(142, 36);
             register_button.TabIndex = 1;
@@ -56,7 +56,7 @@
             Controls.Add(login_button);
             Controls.Add(register_button);
             Name = "MainControl";
-            Size = new Size(800, 450);
+            Size = new Size(328, 360);
             ResumeLayout(false);
         }
 

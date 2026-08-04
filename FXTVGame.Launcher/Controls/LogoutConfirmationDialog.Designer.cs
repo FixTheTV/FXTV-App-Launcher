@@ -36,7 +36,7 @@
             // logout_confirm_button
             // 
             logout_confirm_button.BackColor = SystemColors.ControlLightLight;
-            logout_confirm_button.Location = new Point(22, 56);
+            logout_confirm_button.Location = new Point(30, 66);
             logout_confirm_button.Name = "logout_confirm_button";
             logout_confirm_button.Size = new Size(103, 29);
             logout_confirm_button.TabIndex = 0;
@@ -46,7 +46,7 @@
             // 
             // logout_cancel_button
             // 
-            logout_cancel_button.Location = new Point(151, 56);
+            logout_cancel_button.Location = new Point(167, 66);
             logout_cancel_button.Name = "logout_cancel_button";
             logout_cancel_button.Size = new Size(103, 29);
             logout_cancel_button.TabIndex = 1;
@@ -58,7 +58,7 @@
             // 
             logout_confirm_label.AutoSize = true;
             logout_confirm_label.BackColor = SystemColors.ControlLight;
-            logout_confirm_label.Location = new Point(22, 24);
+            logout_confirm_label.Location = new Point(30, 25);
             logout_confirm_label.Name = "logout_confirm_label";
             logout_confirm_label.Size = new Size(232, 20);
             logout_confirm_label.TabIndex = 2;
@@ -73,7 +73,7 @@
             Controls.Add(logout_cancel_button);
             Controls.Add(logout_confirm_button);
             Name = "LogoutConfirmationDialog";
-            Size = new Size(267, 109);
+            Size = new Size(300, 120);
             ResumeLayout(false);
             PerformLayout();
         }

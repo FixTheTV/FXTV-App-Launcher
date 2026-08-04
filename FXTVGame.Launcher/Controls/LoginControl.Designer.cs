@@ -26,7 +26,7 @@ namespace FXTVGame.Launcher.Controls
             // 
             // login_button
             // 
-            login_button.Location = new Point(297, 371);
+            login_button.Location = new Point(47, 278);
             login_button.Name = "login_button";
             login_button.Size = new Size(234, 40);
             login_button.TabIndex = 5;
@@ -37,7 +37,7 @@ namespace FXTVGame.Launcher.Controls
             // username_label
             // 
             username_label.AutoSize = true;
-            username_label.Location = new Point(297, 268);
+            username_label.Location = new Point(47, 136);
             username_label.Name = "username_label";
             username_label.Size = new Size(75, 20);
             username_label.TabIndex = 0;
@@ -46,7 +46,7 @@ namespace FXTVGame.Launcher.Controls
             // password_label
             // 
             password_label.AutoSize = true;
-            password_label.Location = new Point(297, 308);
+            password_label.Location = new Point(47, 211);
             password_label.Name = "password_label";
             password_label.Size = new Size(70, 20);
             password_label.TabIndex = 2;
@@ -54,18 +54,18 @@ namespace FXTVGame.Launcher.Controls
             // 
             // username_textbox
             // 
-            username_textbox.Location = new Point(378, 268);
+            username_textbox.Location = new Point(47, 159);
             username_textbox.Name = "username_textbox";
             username_textbox.PlaceholderText = "Enter username";
-            username_textbox.Size = new Size(125, 27);
+            username_textbox.Size = new Size(234, 27);
             username_textbox.TabIndex = 1;
             // 
             // password_textbox
             // 
-            password_textbox.Location = new Point(378, 308);
+            password_textbox.Location = new Point(47, 234);
             password_textbox.Name = "password_textbox";
             password_textbox.PlaceholderText = "Enter password";
-            password_textbox.Size = new Size(125, 27);
+            password_textbox.Size = new Size(234, 27);
             password_textbox.TabIndex = 3;
             password_textbox.UseSystemPasswordChar = true;
             // 
@@ -80,7 +80,7 @@ namespace FXTVGame.Launcher.Controls
             Controls.Add(password_label);
             Controls.Add(username_label);
             Name = "LoginControl";
-            Size = new Size(800, 450);
+            Size = new Size(328, 450);
             ResumeLayout(false);
             PerformLayout();
         }
