@@ -13,6 +13,8 @@ namespace FXTVGame.Launcher.Services.Auth
 
         public AuthResult Login(string username, string password)
         {
+            username = username.Trim();
+
             var checkUserExists = databaseService.CheckIfUserExistsAndGetId(username);
 
             if (checkUserExists.SearchResult)

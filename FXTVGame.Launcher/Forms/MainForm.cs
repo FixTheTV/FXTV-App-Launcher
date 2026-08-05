@@ -4,6 +4,7 @@ namespace FXTVGame.Launcher.Forms
 {
     public partial class MainForm : Form
     {
+        private string? CurrentUserSession;
         public MainForm()
         {
             InitializeComponent();
@@ -21,9 +22,21 @@ namespace FXTVGame.Launcher.Forms
 
         private void ShowHome(string username)
         {
-            var homeControl = new HomeControl(username);
-            homeControl.LogoutRequested += ShowMain;
+            CurrentUserSession = username;
+            ShowHomeFromSession();
+        }
 
+        private void ShowHomeFromSession()
+        {
+            if (string.IsNullOrWhiteSpace(CurrentUserSession))
+            {
+                ShowMain();
+                return;
+            }
+
+            var homeControl = new HomeControl(CurrentUserSession);
+            homeControl.LogoutRequested += Logout;
+            homeControl.GoToSetting += ShowSetting;
             ShowScreen(homeControl);
         }
 
@@ -43,6 +56,22 @@ namespace FXTVGame.Launcher.Forms
 
             ShowScreen(registerControl);
         }
+        private void ShowSetting()
+        {
+            var settingControl = new SettingControl();
+            settingControl.SettingApplied += ResizeToScreen;
+            settingControl.BackToHome += ShowHomeFromSession;
+
+            ShowScreen(settingControl);
+        }
+
+        private void Logout()
+        {
+            CurrentUserSession = null;
+            ShowMain();
+        }
+
+
         private void ShowScreen(UserControl screen)
         {
             ResizeToScreen(screen.Size);
@@ -51,6 +80,15 @@ namespace FXTVGame.Launcher.Forms
             contentPanel.Controls.Add(screen);
         }
 
+        
+
+        
+        
+        
+        
+        
+        
+        
         private void ResizeToScreen(Size targetClientSize)
         {
             if (WindowState != FormWindowState.Normal)

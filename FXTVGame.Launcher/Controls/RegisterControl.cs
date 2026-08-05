@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
-using FXTVGame.Launcher.Services.Database;
 using FXTVGame.Launcher.Services.Register;
 
 namespace FXTVGame.Launcher.Controls
@@ -30,24 +29,12 @@ namespace FXTVGame.Launcher.Controls
             string passwordField = password_textbox.Text;
             string repasswordField = retype_password_textbox.Text;
 
-            var check = regService.ValidateRegForm(usernameField, passwordField, repasswordField);
+            var check = regService.Register(usernameField, passwordField, repasswordField);
 
             if (check.Success)
             {
-                DatabaseService database = new DatabaseService();
-                bool userAdded = database.AddUser(usernameField, passwordField);
-
-                if (userAdded)
-                {
-                    MessageBox.Show(check.Message);
-                    RegisterSucceed?.Invoke();
-                }
-                else
-                {
-                    username_warning_label.Text = "Username already taken.";
-                    username_textbox.Clear();
-                    username_textbox.Focus();
-                }
+                MessageBox.Show(check.Message);
+                RegisterSucceed?.Invoke();
             }
             else
             {

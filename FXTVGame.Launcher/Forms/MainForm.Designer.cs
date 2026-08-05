@@ -37,7 +37,7 @@ namespace FXTVGame.Launcher.Forms
             contentPanel.Dock = DockStyle.Fill;
             contentPanel.Location = new Point(0, 0);
             contentPanel.Name = "contentPanel";
-            contentPanel.Size = new Size(800, 450);
+            contentPanel.Size = new Size(1252, 773);
             contentPanel.TabIndex = 0;
             // 
             // MainForm
@@ -45,7 +45,7 @@ namespace FXTVGame.Launcher.Forms
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ActiveCaption;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(1252, 773);
             Controls.Add(contentPanel);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MainForm";
