@@ -1,54 +1,114 @@
+using FXTVGame.Launcher.Models;
+
 namespace FXTVGame.Launcher.Services
 {
     public class LauncherPreferenceService
     {
-        private const string DefaultResolution = "1270 x 820";
+        private const string DefaultResolution = "1280 x 720";
+        private const string DefaultWindowMode = "Windowed";
+
+        private static readonly string[] ValidWindowModes =
+        {
+            "Windowed",
+            "Borderless Windowed",
+            "Fullscreen"
+        };
 
         private readonly string filePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "FXTVGame",
+            "Launcher",
+            "display-settings.txt"
+        );
+
+        private readonly string oldResolutionFilePath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "FXTVGame",
             "Launcher",
             "display-resolution.txt"
         );
 
+        public LauncherDisplaySettings LoadSettings()
+        {
+            string resolution = DefaultResolution;
+            string windowMode = DefaultWindowMode;
+
+            if (File.Exists(filePath))
+            {
+                string[] lines = File.ReadAllLines(filePath);
+
+                if (lines.Length > 0 && TryGetSize(lines[0], out _))
+                {
+                    resolution = lines[0];
+                }
+
+                if (lines.Length > 1 && IsValidWindowMode(lines[1]))
+                {
+                    windowMode = lines[1];
+                }
+            }
+            else if (File.Exists(oldResolutionFilePath))
+            {
+                string oldResolution = File.ReadAllText(oldResolutionFilePath);
+
+                if (TryGetSize(oldResolution, out _))
+                {
+                    resolution = oldResolution;
+                }
+            }
+
+            return new LauncherDisplaySettings
+            {
+                Resolution = resolution,
+                WindowMode = windowMode,
+                ScreenSize = GetSizeOrDefault(resolution)
+            };
+        }
+
         public string LoadResolution()
         {
-            if (!File.Exists(filePath))
-            {
-                return DefaultResolution;
-            }
-
-            string resolution = File.ReadAllText(filePath);
-
-            if (TryGetSize(resolution, out _))
-            {
-                return resolution;
-            }
-
-            return DefaultResolution;
+            return LoadSettings().Resolution;
         }
 
         public Size LoadScreenSize()
         {
-            string resolution = LoadResolution();
+            return LoadSettings().ScreenSize;
+        }
 
+        public void SaveResolution(string resolution)
+        {
+            SaveSettings(resolution, LoadSettings().WindowMode);
+        }
+
+        public void SaveSettings(string resolution, string windowMode)
+        {
+            if (!TryGetSize(resolution, out _))
+            {
+                resolution = DefaultResolution;
+            }
+
+            if (!IsValidWindowMode(windowMode))
+            {
+                windowMode = DefaultWindowMode;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+            File.WriteAllLines(filePath, new[] { resolution, windowMode });
+        }
+
+        private Size GetSizeOrDefault(string resolution)
+        {
             if (TryGetSize(resolution, out Size size))
             {
                 return size;
             }
 
-            return new Size(1270, 820);
+            return new Size(1280, 720);
         }
 
-        public void SaveResolution(string resolution)
+        private bool IsValidWindowMode(string windowMode)
         {
-            if (!TryGetSize(resolution, out _))
-            {
-                return;
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-            File.WriteAllText(filePath, resolution);
+            return ValidWindowModes.Contains(windowMode);
         }
 
         private bool TryGetSize(string resolution, out Size size)

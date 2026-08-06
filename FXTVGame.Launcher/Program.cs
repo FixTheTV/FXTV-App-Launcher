@@ -7,6 +7,7 @@ namespace FXTVGame.Launcher
         [STAThread]
         static void Main()
         {
+            Application.SetHighDpiMode(HighDpiMode.SystemAware);
             ApplicationConfiguration.Initialize();
             Application.Run(new MainForm());
         }

@@ -1,10 +1,14 @@
 using FXTVGame.Launcher.Controls;
+using FXTVGame.Launcher.Models;
+using FXTVGame.Launcher.Services;
 
 namespace FXTVGame.Launcher.Forms
 {
     public partial class MainForm : Form
     {
+        private readonly LauncherPreferenceService preferenceService = new LauncherPreferenceService();
         private string? CurrentUserSession;
+
         public MainForm()
         {
             InitializeComponent();
@@ -59,7 +63,7 @@ namespace FXTVGame.Launcher.Forms
         private void ShowSetting()
         {
             var settingControl = new SettingControl();
-            settingControl.SettingApplied += ResizeToScreen;
+            settingControl.SettingApplied += ApplyDisplaySettings;
             settingControl.BackToHome += ShowHomeFromSession;
 
             ShowScreen(settingControl);
@@ -74,25 +78,57 @@ namespace FXTVGame.Launcher.Forms
 
         private void ShowScreen(UserControl screen)
         {
-            ResizeToScreen(screen.Size);
+            if (UsesDisplaySettings(screen))
+            {
+                ApplyDisplaySettings(preferenceService.LoadSettings());
+            }
+            else
+            {
+                ApplyWindowedSize(screen.Size);
+            }
+
             contentPanel.Controls.Clear();
             screen.Dock = DockStyle.Fill;
             contentPanel.Controls.Add(screen);
         }
 
-        
-
-        
-        
-        
-        
-        
-        
-        
-        private void ResizeToScreen(Size targetClientSize)
+        private bool UsesDisplaySettings(UserControl screen)
         {
+            return screen is HomeControl || screen is SettingControl;
+        }
+
+        private void ApplyDisplaySettings(LauncherDisplaySettings settings)
+        {
+            SuspendLayout();
+
+            if (settings.WindowMode == "Fullscreen")
+            {
+                WindowState = FormWindowState.Normal;
+                FormBorderStyle = FormBorderStyle.None;
+                Bounds = Screen.FromControl(this).Bounds;
+            }
+            else if (settings.WindowMode == "Borderless Windowed")
+            {
+                WindowState = FormWindowState.Normal;
+                FormBorderStyle = FormBorderStyle.None;
+                Bounds = Screen.FromControl(this).WorkingArea;
+            }
+            else
+            {
+                FormBorderStyle = FormBorderStyle.FixedSingle;
+                ApplyWindowedSize(settings.ScreenSize);
+            }
+
+            ResumeLayout();
+        }
+
+        private void ApplyWindowedSize(Size targetClientSize)
+        {
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+
             if (WindowState != FormWindowState.Normal)
             {
+                WindowState = FormWindowState.Normal;
                 ClientSize = targetClientSize;
                 return;
             }

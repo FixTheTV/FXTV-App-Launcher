@@ -48,6 +48,7 @@ namespace FXTVGame.Launcher.Forms
             ClientSize = new Size(1252, 773);
             Controls.Add(contentPanel);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
             Name = "MainForm";
             Text = "FXTV Game Launcher";
             ResumeLayout(false);

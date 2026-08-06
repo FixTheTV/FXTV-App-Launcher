@@ -100,7 +100,7 @@ namespace FXTVGame.Launcher.Controls
             resolution_combo_box.DropDownStyle = ComboBoxStyle.DropDownList;
             resolution_combo_box.Font = new Font("Segoe UI", 9F);
             resolution_combo_box.FormattingEnabled = true;
-            resolution_combo_box.Items.AddRange(new object[] { "1270 x 820", "1280 x 720", "1600 x 900", "1920 x 1080" });
+            resolution_combo_box.Items.AddRange(new object[] { "1280 x 720", "1600 x 900", "1920 x 1080" });
             resolution_combo_box.Location = new Point(190, 61);
             resolution_combo_box.Name = "resolution_combo_box";
             resolution_combo_box.Size = new Size(260, 28);

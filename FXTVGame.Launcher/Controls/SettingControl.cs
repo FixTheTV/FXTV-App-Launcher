@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using FXTVGame.Launcher.Models;
 using FXTVGame.Launcher.Services;
 
 namespace FXTVGame.Launcher.Controls
@@ -13,7 +14,7 @@ namespace FXTVGame.Launcher.Controls
     {
         private readonly LauncherPreferenceService preferenceService = new LauncherPreferenceService();
 
-        public event Action<Size>? SettingApplied;
+        public event Action<LauncherDisplaySettings>? SettingApplied;
         public event Action? BackToHome;
         public SettingControl()
         {
@@ -29,26 +30,32 @@ namespace FXTVGame.Launcher.Controls
         private void apply_button_Click(object sender, EventArgs e)
         {
             string resolution = resolution_combo_box.Text;
+            string windowMode = window_mode_combo_box.Text;
 
-            preferenceService.SaveResolution(resolution);
-            Size newSize = preferenceService.LoadScreenSize();
-            Size = newSize;
+            preferenceService.SaveSettings(resolution, windowMode);
+            LauncherDisplaySettings settings = preferenceService.LoadSettings();
+            Size = settings.ScreenSize;
             CenterContent();
-            SettingApplied?.Invoke(newSize);
+            SettingApplied?.Invoke(settings);
         }
 
         private void LoadPreferences()
         {
-            string resolution = preferenceService.LoadResolution();
+            LauncherDisplaySettings settings = preferenceService.LoadSettings();
 
-            if (!resolution_combo_box.Items.Contains(resolution))
+            if (!resolution_combo_box.Items.Contains(settings.Resolution))
             {
-                resolution_combo_box.Items.Insert(0, resolution);
+                resolution_combo_box.Items.Insert(0, settings.Resolution);
             }
 
-            resolution_combo_box.Text = resolution;
-            window_mode_combo_box.SelectedIndex = 0;
-            Size = preferenceService.LoadScreenSize();
+            if (!window_mode_combo_box.Items.Contains(settings.WindowMode))
+            {
+                window_mode_combo_box.Items.Insert(0, settings.WindowMode);
+            }
+
+            resolution_combo_box.Text = settings.Resolution;
+            window_mode_combo_box.Text = settings.WindowMode;
+            Size = settings.ScreenSize;
             CenterContent();
         }
 

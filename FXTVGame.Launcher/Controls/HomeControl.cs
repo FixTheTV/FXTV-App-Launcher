@@ -12,7 +12,7 @@ namespace FXTVGame.Launcher.Controls
         public HomeControl(string username)
         {
             InitializeComponent();
-            Size = preferenceService.LoadScreenSize();
+            Size = preferenceService.LoadSettings().ScreenSize;
             welcome_label.Text = $"Welcome {username} !";
             CenterContent();
         }
