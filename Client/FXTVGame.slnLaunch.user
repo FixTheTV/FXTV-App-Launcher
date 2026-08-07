@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "..\\..\\FXTVGame.Backend\\FXTVGame.Backend.csproj",
+        "Action": "Start",
+        "DebugTarget": "FXTVGame.Backend"
+      },
+      {
+        "Path": "FXTVGame.Launcher\\FXTVGame.Launcher.csproj",
+        "Action": "Start",
+        "DebugTarget": "FXTVGame.Launcher"
+      }
+    ]
+  }
+]

@@ -8,7 +8,6 @@ namespace FXTVGame.Launcher.Forms
     {
         private readonly LauncherPreferenceService preferenceService = new LauncherPreferenceService();
         private string? CurrentUserSession;
-
         public MainForm()
         {
             InitializeComponent();
