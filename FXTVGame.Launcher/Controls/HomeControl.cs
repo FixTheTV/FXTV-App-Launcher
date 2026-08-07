@@ -8,6 +8,7 @@ namespace FXTVGame.Launcher.Controls
 
         public event Action? LogoutRequested;
         public event Action? GoToSetting;
+        public event Action? PlayOnline;
 
         public HomeControl(string username)
         {
@@ -39,7 +40,7 @@ namespace FXTVGame.Launcher.Controls
 
         private void settings_button_Click(object sender, EventArgs e)
         {
-            GoToSetting?.Invoke(); 
+            GoToSetting?.Invoke();
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -70,6 +71,11 @@ namespace FXTVGame.Launcher.Controls
                 Width - logout_button.Width - 48,
                 Height - logout_button.Height - 48
             );
+        }
+
+        private void online_play_button_Click(object sender, EventArgs e)
+        {
+            PlayOnline?.Invoke();
         }
     }
 }

@@ -60,6 +60,7 @@ namespace FXTVGame.Launcher.Controls
             online_play_button.TabIndex = 2;
             online_play_button.Text = "PLAY ONLINE";
             online_play_button.UseVisualStyleBackColor = true;
+            online_play_button.Click += online_play_button_Click;
             // 
             // settings_button
             // 

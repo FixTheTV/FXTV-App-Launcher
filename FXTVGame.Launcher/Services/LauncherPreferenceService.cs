@@ -21,13 +21,6 @@ namespace FXTVGame.Launcher.Services
             "display-settings.txt"
         );
 
-        private readonly string oldResolutionFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "FXTVGame",
-            "Launcher",
-            "display-resolution.txt"
-        );
-
         public LauncherDisplaySettings LoadSettings()
         {
             string resolution = DefaultResolution;
@@ -45,15 +38,6 @@ namespace FXTVGame.Launcher.Services
                 if (lines.Length > 1 && IsValidWindowMode(lines[1]))
                 {
                     windowMode = lines[1];
-                }
-            }
-            else if (File.Exists(oldResolutionFilePath))
-            {
-                string oldResolution = File.ReadAllText(oldResolutionFilePath);
-
-                if (TryGetSize(oldResolution, out _))
-                {
-                    resolution = oldResolution;
                 }
             }
 

@@ -41,6 +41,7 @@ namespace FXTVGame.Launcher.Forms
             var homeControl = new HomeControl(CurrentUserSession);
             homeControl.LogoutRequested += Logout;
             homeControl.GoToSetting += ShowSetting;
+            homeControl.PlayOnline += ShowFindLobby;
             ShowScreen(homeControl);
         }
 
@@ -74,6 +75,11 @@ namespace FXTVGame.Launcher.Forms
             CurrentUserSession = null;
             ShowMain();
         }
+        private void ShowFindLobby()
+        {
+            var findLobbyControl = new FindLobbyControl();
+            ShowScreen(findLobbyControl);
+        }
 
 
         private void ShowScreen(UserControl screen)
@@ -91,12 +97,10 @@ namespace FXTVGame.Launcher.Forms
             screen.Dock = DockStyle.Fill;
             contentPanel.Controls.Add(screen);
         }
-
         private bool UsesDisplaySettings(UserControl screen)
         {
             return screen is HomeControl || screen is SettingControl;
         }
-
         private void ApplyDisplaySettings(LauncherDisplaySettings settings)
         {
             SuspendLayout();
@@ -121,7 +125,6 @@ namespace FXTVGame.Launcher.Forms
 
             ResumeLayout();
         }
-
         private void ApplyWindowedSize(Size targetClientSize)
         {
             FormBorderStyle = FormBorderStyle.FixedSingle;
