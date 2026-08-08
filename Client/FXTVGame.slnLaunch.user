@@ -3,7 +3,7 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Path": "..\\..\\FXTVGame.Backend\\FXTVGame.Backend.csproj",
+        "Path": "..\\Servers\\FXTVGame.Backend\\FXTVGame.Backend.csproj",
         "Action": "Start",
         "DebugTarget": "FXTVGame.Backend"
       },
