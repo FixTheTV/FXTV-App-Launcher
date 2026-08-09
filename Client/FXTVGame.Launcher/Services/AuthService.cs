@@ -10,6 +10,7 @@ namespace FXTVGame.Launcher.Services.Auth
     public class AuthService
     {
         private readonly NetworkService networkService = new NetworkService();
+
         public AuthResult authResult = new AuthResult { Success = false, Message = "Failed to Login", UserId = 0, Username = "placeholder" };
         public AuthService()
         {
