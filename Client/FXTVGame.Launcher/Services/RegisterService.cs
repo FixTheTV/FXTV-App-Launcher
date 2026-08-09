@@ -42,7 +42,7 @@ namespace FXTVGame.Launcher.Services
 
             await network.SendRegisterPacket(username_form, password_form);
 
-            return new RegisterResult { Message = "Sign up completed.", Success = true };
+            return await network.RecieveRegisterResultPacket();
         }
         public async Task ConnectBoisss()
         {
