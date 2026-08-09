@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
-using FXTVGame.Launcher.Models.Register;
-using FXTVGame.Launcher.Services.Database;
+using FXTVGame.Backend.Models;
+using FXTVGame.Backend.Services;
 using System.Security.Cryptography.Xml;
 
 namespace FXTVGame.Launcher.Services.Register

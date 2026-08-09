@@ -1,7 +1,7 @@
-﻿using FXTVGame.Launcher.Models.Database;
+﻿using FXTVGame.Backend.Models;
 using Microsoft.Data.Sqlite;
 
-namespace FXTVGame.Launcher.Services.Database
+namespace FXTVGame.Backend.Services
 {
     public class DatabaseService
     {
@@ -34,7 +34,7 @@ namespace FXTVGame.Launcher.Services.Database
 
         public bool AddUser(string username, string password)
         {
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            string passwordHash =   BCrypt.Net.BCrypt.HashPassword(password);
 
                 using (var connection = new SqliteConnection(connectionString))
                 {

@@ -2,11 +2,11 @@
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
+using FXTVGame.Backend.Services;
 
 TcpListener tcpListener = new TcpListener(IPAddress.Any, 12345);
+PacketService packetService = new PacketService();
 tcpListener.Start();
-
-
 
 while (true)
 {
@@ -53,10 +53,8 @@ async Task HandleClientAsync(TcpClient tcpClient)
         }
 
         Console.WriteLine("CLIENT DISCONNECTED");
-        Console.Out.Flush();
     }
 }
-
 
 async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
 {
@@ -67,6 +65,7 @@ async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
     string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
     currentOffset += usernameLength;
 
+
     byte passLength = payloadBuffer[currentOffset];
     currentOffset++;
 
@@ -75,18 +74,32 @@ async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
 
     Console.WriteLine($"Backend phat hien yeu cau dang nhap:\nUser = {username}, Pass = {password}");
 
-    int returnPacketLength = 7;
-    byte[] packet = new byte[returnPacketLength];
+    var databaseService = new DatabaseService();
+    var databaseResult = databaseService.CheckIfUserExistsAndGetId(username);
+    byte[] packet;
 
-    Array.Copy(BitConverter.GetBytes(returnPacketLength), 0, packet, 0, 4);
-    Array.Copy(BitConverter.GetBytes((short)2001), 0, packet, 4, 2);
-
-    int currentOffset2 = 6;
-
-    packet[currentOffset2] = 1;
-    currentOffset2++;
-
-    await network.WriteAsync(packet, 0, returnPacketLength);
+    if (!databaseResult.SearchResult)
+    {
+        packet = packetService.CreateLoginResultPacket(false, username);
+        Console.WriteLine("Search failed");
+        Console.WriteLine(string.Join(" ", packet.Take(currentOffset)));
+    }
+    else
+    {
+        if (!databaseService.CheckPassword(databaseResult.UserId, password))
+        {
+            packet = packetService.CreateLoginResultPacket(false, username);
+            Console.WriteLine("Check pass wrong");
+            Console.WriteLine(string.Join(" ", packet.Take(currentOffset)));
+        }   
+        else
+        {
+            packet = packetService.CreateLoginResultPacket(true, username, databaseResult.UserId);
+            Console.WriteLine("Login Succeed");
+            Console.WriteLine(string.Join(" ", packet.Take(currentOffset+8)));
+        }
+    }
+    await network.WriteAsync(packet, 0, packet.Length);
 
 }
 

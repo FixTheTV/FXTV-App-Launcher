@@ -1,98 +1,85 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net.Sockets;
+﻿using FXTVGame.Launcher.Models.Auth;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 namespace FXTVGame.Launcher.Services
 {
     internal class NetworkService
     {
+        private readonly PacketService packetService = new PacketService();
         public readonly TcpClient tcpClient;
+
         public NetworkService()
         {
             tcpClient = new TcpClient();
         }
 
-        public async Task ConnectAsync(IPAddress ip, int port)
-        {
-            try { await tcpClient.ConnectAsync(ip, port); } catch { };
-        }
+        public bool IsConnected => tcpClient != null && tcpClient.Connected;
+
         public async Task ConnectAsync(string ip, int port)
         {
             var convertedIP = IPAddress.Parse(ip);
-            try { await tcpClient.ConnectAsync(convertedIP, port); } catch { };
+            try { await tcpClient.ConnectAsync(convertedIP, port); } catch { }
+            ;
         }
 
         public async Task SendLoginPacket(string username, string password)
         {
             var stream = tcpClient.GetStream();
-            
-                if (stream == null) return;
-
-                byte[] userBytes = Encoding.UTF8.GetBytes(username);
-                byte[] passBytes = Encoding.UTF8.GetBytes(password);
-
-                if (userBytes.Length > 255 || passBytes.Length > 255)
-                {
-                    throw new ArgumentException("Tài khoản hoặc mật khẩu quá dài!");
-                }
-
-                int totalLength = 4 + 2 + 1 + userBytes.Length + 1 + passBytes.Length;
-                byte[] packet = new byte[totalLength];
-
-                Array.Copy(BitConverter.GetBytes(totalLength), 0, packet, 0, 4);
-                Array.Copy(BitConverter.GetBytes((short)1001), 0, packet, 4, 2);
-
-                int currentOffset = 6;
-                packet[currentOffset] = (byte)userBytes.Length;
-                currentOffset += 1;
-
-                Array.Copy(userBytes, 0, packet, currentOffset, userBytes.Length);
-                currentOffset += userBytes.Length;
-
-                packet[currentOffset] = (byte)passBytes.Length;
-                currentOffset += 1;
-
-                Array.Copy(passBytes, 0, packet, currentOffset, passBytes.Length);
-
-                await stream.WriteAsync(packet, 0, packet.Length);
-            
-            
-
-
+            byte[] packet = packetService.CreateLoginRequestPacket(username, password);
+            await stream.WriteAsync(packet, 0, packet.Length);
         }
 
-        public async Task RecieveLoginResultPacket()
+        public async Task<AuthResult> RecieveLoginResultPacket()
         {
             var stream = tcpClient.GetStream();
-            
-            byte[] headerBuffer= new byte[6];
-            int bytesRead = await stream.ReadAsync(headerBuffer, 0, headerBuffer.Length);
 
-            if (bytesRead < 6) return;
+            byte[] headerBuffer = new byte[6];
+            await ReadExactAsync(stream, headerBuffer, 6);
 
             int length = BitConverter.ToInt32(headerBuffer, 0);
             int opCode = BitConverter.ToInt16(headerBuffer, 4);
 
-            byte[] payloadBuffer = new byte[length - 6];
-            bytesRead = await stream.ReadAsync(payloadBuffer, 0, payloadBuffer.Length);
+            int payloadLength = length - 6;
+            byte[] payloadBuffer = new byte[payloadLength];
+            await ReadExactAsync(stream, payloadBuffer, payloadLength);
 
-
-            await HandleLoginResult(payloadBuffer);
-               
-            
+            return HandleLoginResult(payloadBuffer);
         }
 
-        public async Task HandleLoginResult(byte[] payloadBuffer)
+        private AuthResult HandleLoginResult(byte[] payloadBuffer)
         {
-            if (payloadBuffer[0] == 1)
+            int currentOffset = 0;
+
+            if (payloadBuffer[currentOffset] == 1) 
             {
-                MessageBox.Show("YEAH");
+                currentOffset++;
+                int usernameLength = payloadBuffer[currentOffset];
+                currentOffset++;
+
+                string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
+                currentOffset += usernameLength;
+
+                Int64 userID = BitConverter.ToInt64(payloadBuffer, currentOffset);
+
+                return new AuthResult { Success = true, Message = "Logged in successfully", Username = username, UserId = userID };
             }
-            else
+            else 
             {
-                MessageBox.Show("NAH NAH");
+                return new AuthResult { Success = false, Message = "Incorrect username or password.", Username = "", UserId = 0 };
+            }
+        }
+
+
+        private async Task ReadExactAsync(NetworkStream stream, byte[] buffer, int bytesToRead)
+        {
+            int totalBytesRead = 0;
+            while (totalBytesRead < bytesToRead)
+            {
+                int bytesRead = await stream.ReadAsync(buffer, totalBytesRead, bytesToRead - totalBytesRead);
+                if (bytesRead == 0) throw new EndOfStreamException("Kết nối mạng bị đóng bất ngờ!");
+                totalBytesRead += bytesRead;
             }
         }
     }

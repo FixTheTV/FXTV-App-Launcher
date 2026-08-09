@@ -17,23 +17,24 @@ namespace FXTVGame.Launcher.Controls
             InitializeComponent();
         }
 
-        public void btnLogin_Click(object arg, EventArgs e)
+        public async void btnLogin_Click(object arg, EventArgs e)
         {
-            authService.ConnectBoisss();
+            await authService.ConnectBoisss();
 
-            AuthResult authResult = authService.Login(
+           await authService.Login(
                 username_textbox.Text,
                 password_textbox.Text
             );
 
-            if (!authResult.Success)
+
+            if (!authService.authResult.Success)
             {
-                MessageBox.Show(authResult.Message);
+                MessageBox.Show(authService.authResult.Message);
                 password_textbox.Clear();
                 password_textbox.Focus();
                 return;
             }
-            LoginSucceeded?.Invoke(authResult.Username);
+            LoginSucceeded?.Invoke(authService.authResult.Username);
         }
 
 
