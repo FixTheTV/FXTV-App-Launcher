@@ -45,6 +45,10 @@ async Task HandleClientAsync(TcpClient tcpClient)
                 {
                     await HandleLoginAsync(payloadBuffer, netStream);
                 }
+                if (opCode == 1002)
+                {
+                    await HandleRegisterAsync(payloadBuffer, netStream);
+                }
             }
         }
         catch (Exception ex)
@@ -82,7 +86,6 @@ async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
     {
         packet = packetService.CreateLoginResultPacket(false, username);
         Console.WriteLine("Search failed");
-        Console.WriteLine(string.Join(" ", packet.Take(currentOffset)));
     }
     else
     {
@@ -90,16 +93,47 @@ async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
         {
             packet = packetService.CreateLoginResultPacket(false, username);
             Console.WriteLine("Check pass wrong");
-            Console.WriteLine(string.Join(" ", packet.Take(currentOffset)));
         }   
         else
         {
             packet = packetService.CreateLoginResultPacket(true, username, databaseResult.UserId);
             Console.WriteLine("Login Succeed");
-            Console.WriteLine(string.Join(" ", packet.Take(currentOffset+8)));
         }
     }
     await network.WriteAsync(packet, 0, packet.Length);
 
+}
+async Task HandleRegisterAsync(byte[] payloadBuffer, NetworkStream network)
+{
+    int currentOffset = 0;
+    byte usernameLength = payloadBuffer[currentOffset];
+    currentOffset++;
+
+    string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
+    currentOffset += usernameLength;
+
+
+    byte passLength = payloadBuffer[currentOffset];
+    currentOffset++;
+
+    string password = Encoding.UTF8.GetString(payloadBuffer, currentOffset, passLength);
+    currentOffset += passLength;
+
+    Console.WriteLine($"Backend phat hien yeu cau dang ki:\nUser = {username}, Pass = {password}");
+
+    var databaseService = new DatabaseService();
+    var databaseResult = databaseService.CheckIfUserExistsAndGetId(username);
+    byte[] packet;
+
+    if (databaseResult.SearchResult)
+    {
+        packet = packetService.CreateRegisterResultPacket(false);
+    }
+    else
+    {
+        databaseService.AddUser(username, password);
+        packet = packetService.CreateRegisterResultPacket(true, username);
+    }
+    await network.WriteAsync(packet, 0, packet.Length);
 }
 

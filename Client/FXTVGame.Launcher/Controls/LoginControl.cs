@@ -19,7 +19,7 @@ namespace FXTVGame.Launcher.Controls
 
         public async void btnLogin_Click(object arg, EventArgs e)
         {
-            await authService.ConnectBoisss();
+           await authService.ConnectBoisss();
 
            await authService.Login(
                 username_textbox.Text,

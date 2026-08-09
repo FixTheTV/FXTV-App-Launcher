@@ -8,6 +8,7 @@ namespace FXTVGame.Launcher.Services
     {
         
         private const int LOGIN_REQ_HEADER_LENGTH = 8;
+        private const int REG_REQ_HEADER_LENGTH = 8;
 
         public byte[] CreatePacketHeader(int totalPackgetlength, int opCode)
         {
@@ -43,6 +44,32 @@ namespace FXTVGame.Launcher.Services
             Array.Copy(Encoding.UTF8.GetBytes(password), 0, loginPacket, currentOffset, passwordLengthInBytes);
 
             return loginPacket;
+        }
+
+        public byte[] CreateRegisterRequestPacket(string username, string password)
+        {
+            int usernameLengthInBytes = Encoding.UTF8.GetByteCount(username);
+            int passwordLengthInBytes = Encoding.UTF8.GetByteCount(password);
+            int totalLength = REG_REQ_HEADER_LENGTH + usernameLengthInBytes + passwordLengthInBytes;
+            byte[] registerPacket = new byte[totalLength];
+
+            Array.Copy(BitConverter.GetBytes(totalLength), 0, registerPacket, 0, 4);
+            Array.Copy(BitConverter.GetBytes((short)1002), 0, registerPacket, 4, 2);
+
+            int currentOffset = 6;
+
+            registerPacket[currentOffset] = (byte)usernameLengthInBytes;
+            ++currentOffset;
+
+            Array.Copy(Encoding.UTF8.GetBytes(username), 0, registerPacket, currentOffset, usernameLengthInBytes);
+            currentOffset += usernameLengthInBytes;
+
+            registerPacket[currentOffset] = (byte)passwordLengthInBytes;
+            ++currentOffset;
+
+            Array.Copy(Encoding.UTF8.GetBytes(password), 0, registerPacket, currentOffset, passwordLengthInBytes);
+
+            return registerPacket;
         }
     }
 }
