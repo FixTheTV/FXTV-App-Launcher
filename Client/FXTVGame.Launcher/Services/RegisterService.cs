@@ -46,7 +46,7 @@ namespace FXTVGame.Launcher.Services
         }
         public async Task ConnectBoisss()
         {
-            await network.ConnectAsync("192.168.1.202", 12345);
+            await network.ConnectAsync("192.168.1.217", 12345);
         }
 
     }

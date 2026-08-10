@@ -25,7 +25,7 @@ namespace FXTVGame.Launcher.Services.Auth
 
         public async Task ConnectBoisss()
         {
-            await networkService.ConnectAsync("192.168.1.202",12345);
+            await networkService.ConnectAsync("192.168.1.217",12345);
         }
 
         public async Task SendLoginAsync(string username, string password)

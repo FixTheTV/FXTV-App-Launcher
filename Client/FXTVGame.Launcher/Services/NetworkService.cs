@@ -86,7 +86,6 @@ namespace FXTVGame.Launcher.Services
                 string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
                 currentOffset += usernameLength;
 
-                Int64 userID = BitConverter.ToInt64(payloadBuffer, currentOffset);
                 return new RegisterResult { Success = true, Message = "Sign in successfully"};
                 
             }

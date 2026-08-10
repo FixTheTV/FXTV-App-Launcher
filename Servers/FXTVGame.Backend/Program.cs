@@ -79,7 +79,7 @@ async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
     Console.WriteLine($"Backend phat hien yeu cau dang nhap:\nUser = {username}, Pass = {password}");
 
     var databaseService = new DatabaseService();
-    var databaseResult = databaseService.CheckIfUserExistsAndGetId(username);
+    var databaseResult = await databaseService.CheckIfUserExistsAndGetIdAsync(username);
     byte[] packet;
 
     if (!databaseResult.SearchResult)
@@ -89,7 +89,7 @@ async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
     }
     else
     {
-        if (!databaseService.CheckPassword(databaseResult.UserId, password))
+        if ( !await databaseService.CheckPasswordAsync(databaseResult.UserId, password))
         {
             packet = packetService.CreateLoginResultPacket(false, username);
             Console.WriteLine("Check pass wrong");
@@ -122,7 +122,7 @@ async Task HandleRegisterAsync(byte[] payloadBuffer, NetworkStream network)
     Console.WriteLine($"Backend phat hien yeu cau dang ki:\nUser = {username}, Pass = {password}");
 
     var databaseService = new DatabaseService();
-    var databaseResult = databaseService.CheckIfUserExistsAndGetId(username);
+    var databaseResult = await databaseService.CheckIfUserExistsAndGetIdAsync(username);
     byte[] packet;
 
     if (databaseResult.SearchResult)
@@ -131,7 +131,7 @@ async Task HandleRegisterAsync(byte[] payloadBuffer, NetworkStream network)
     }
     else
     {
-        databaseService.AddUser(username, password);
+        await databaseService.AddUserAsync(username, password);
         packet = packetService.CreateRegisterResultPacket(true, username);
     }
     await network.WriteAsync(packet, 0, packet.Length);

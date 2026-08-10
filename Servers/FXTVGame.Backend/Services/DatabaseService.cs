@@ -1,11 +1,12 @@
 ﻿using FXTVGame.Backend.Models;
-using Microsoft.Data.Sqlite;
+using MySqlConnector;
+
 
 namespace FXTVGame.Backend.Services
 {
     public class DatabaseService
     {
-        private readonly string connectionString = "Data Source=UserAuth.db;";
+        private readonly string connectionString = "Server=localhost;Port=3306;Database=fxtv_launcher;User=root;Password=;Pooling=true;Min Pool Size=5;Max Pool Size=100;";
 
         public DatabaseService()
         {
@@ -14,66 +15,68 @@ namespace FXTVGame.Backend.Services
 
         public void Initialize()
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
 
                 using (var createTableCmd = connection.CreateCommand())
                 {
                     createTableCmd.CommandText = @"
-                    CREATE TABLE IF NOT EXISTS Users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-                    password TEXT NOT NULL
-                    );";
+                    CREATE TABLE IF NOT EXISTS users (
+                        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(50) NOT NULL UNIQUE,
+                        password VARCHAR(255) NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
                     createTableCmd.ExecuteNonQuery();
                 }
             }
         }
 
-        public bool AddUser(string username, string password)
+        public async Task<bool> AddUserAsync(string username, string password)
         {
-            string passwordHash =   BCrypt.Net.BCrypt.HashPassword(password);
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
-                using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var addUserCmd = connection.CreateCommand())
                 {
-                    connection.Open();
+                    addUserCmd.CommandText = @"
+                    INSERT IGNORE INTO users (username, password)
+                    VALUES (@username, @password);";
 
-                    using (var addUserCmd = connection.CreateCommand())
-                    {
-                        addUserCmd.CommandText = @"
-                    INSERT OR IGNORE INTO Users (username, password)
-                    VALUES ($username, $password);";
+                    addUserCmd.Parameters.AddWithValue("@username", username);
+                    addUserCmd.Parameters.AddWithValue("@password", passwordHash);
 
-                        addUserCmd.Parameters.AddWithValue("$username", username);
-                        addUserCmd.Parameters.AddWithValue("$password", passwordHash);
-
-                        return addUserCmd.ExecuteNonQuery() > 0;
-                    }
+                    int rowsAffected = await addUserCmd.ExecuteNonQueryAsync();
+                    return rowsAffected > 0;
                 }
+            }
         }
 
-        public DatabaseCheckResult CheckIfUserExistsAndGetId(string username)
+        public async Task<DatabaseCheckResult> CheckIfUserExistsAndGetIdAsync(string username)
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new MySqlConnection(connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
 
                 using (var checkUserExistsCmd = connection.CreateCommand())
                 {
                     checkUserExistsCmd.CommandText = @"
                     SELECT id
-                    FROM Users
-                    WHERE username = $username;";
+                    FROM users
+                    WHERE username = @username;";
 
-                    checkUserExistsCmd.Parameters.AddWithValue("$username", username);
+                    checkUserExistsCmd.Parameters.AddWithValue("@username", username);
 
-                    object? result = checkUserExistsCmd.ExecuteScalar();
+                    object? result = await checkUserExistsCmd.ExecuteScalarAsync();
 
-                    if (result == null)
+                    if (result == null || result == DBNull.Value)
                     {
-                        return new DatabaseCheckResult { SearchResult = false }; 
+                        return new DatabaseCheckResult { SearchResult = false };
                     }
 
                     return new DatabaseCheckResult
@@ -81,29 +84,28 @@ namespace FXTVGame.Backend.Services
                         UserId = Convert.ToInt64(result),
                         SearchResult = true
                     };
-                    
                 }
             }
         }
 
-        public bool CheckPassword(long userId, string password)
+        public async Task<bool> CheckPasswordAsync(long userId, string password)
         {
-            using (var connection = new SqliteConnection(connectionString))
+            using (var connection = new MySqlConnection(connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
 
                 using (var checkPasswordCmd = connection.CreateCommand())
                 {
                     checkPasswordCmd.CommandText = @"
                     SELECT password
-                    FROM Users
-                    WHERE id = $userid;";
+                    FROM users
+                    WHERE id = @userid;";
 
-                    checkPasswordCmd.Parameters.AddWithValue("$userid", userId);
+                    checkPasswordCmd.Parameters.AddWithValue("@userid", userId);
 
-                    var result = checkPasswordCmd.ExecuteScalar();
+                    var result = await checkPasswordCmd.ExecuteScalarAsync();
 
-                    if (result == null)
+                    if (result == null || result == DBNull.Value)
                     {
                         return false;
                     }
@@ -120,7 +122,6 @@ namespace FXTVGame.Backend.Services
                     }
                 }
             }
-
         }
     }
 }
