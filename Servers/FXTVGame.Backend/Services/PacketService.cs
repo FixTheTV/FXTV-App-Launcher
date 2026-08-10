@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
+using FXTVGame.Backend.Network;
+
 namespace FXTVGame.Backend.Services
 {
     internal class PacketService
@@ -31,7 +33,7 @@ namespace FXTVGame.Backend.Services
             byte[] loginPacket = new byte[totalLength];
 
 
-            Array.Copy(CreatePacketHeader(totalLength, 1001), loginPacket, 6);
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.C2S_Login), loginPacket, 6);
 
             int currentOffset = 6;
 
@@ -60,7 +62,7 @@ namespace FXTVGame.Backend.Services
                 totalLength = totalLength + usernameLength + 10;
                 byte[] loginResPacket = new byte[totalLength];
 
-                Array.Copy(CreatePacketHeader(totalLength, 2001), loginResPacket, HEADER_LENGTH);
+                Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_LoginResult), loginResPacket, HEADER_LENGTH);
 
                 int currentOffset = HEADER_LENGTH;
 
@@ -83,7 +85,7 @@ namespace FXTVGame.Backend.Services
                 ++totalLength;
                 byte[] loginResPacket = new byte[totalLength];
 
-                Array.Copy(CreatePacketHeader(totalLength, 2001), loginResPacket, HEADER_LENGTH);
+                Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_LoginResult), loginResPacket, HEADER_LENGTH);
 
                 loginResPacket[totalLength-1] = (byte)0;
                 return loginResPacket;
@@ -102,7 +104,7 @@ namespace FXTVGame.Backend.Services
             byte[] loginPacket = new byte[totalLength];
 
 
-            Array.Copy(CreatePacketHeader(totalLength, 1002), loginPacket, 6);
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.C2S_Register), loginPacket, 6);
 
             int currentOffset = 6;
 
@@ -131,7 +133,7 @@ namespace FXTVGame.Backend.Services
                 totalLength = totalLength + usernameLength + 2;
                 byte[] registerResPacket = new byte[totalLength];
 
-                Array.Copy(CreatePacketHeader(totalLength, 2002), registerResPacket, HEADER_LENGTH);
+                Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_RegisterResult), registerResPacket, HEADER_LENGTH);
 
                 int currentOffset = HEADER_LENGTH;
 
@@ -153,7 +155,7 @@ namespace FXTVGame.Backend.Services
                 ++totalLength;
                 byte[] registerResPacket = new byte[totalLength];
 
-                Array.Copy(CreatePacketHeader(totalLength, 2002), registerResPacket, HEADER_LENGTH);
+                Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_RegisterResult), registerResPacket, HEADER_LENGTH);
 
                 registerResPacket[totalLength - 1] = (byte)0;
                 return registerResPacket;

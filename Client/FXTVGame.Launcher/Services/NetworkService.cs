@@ -129,5 +129,10 @@ namespace FXTVGame.Launcher.Services
                 totalBytesRead += bytesRead;
             }
         }
+
+        public async Task DisconnectAsync()
+        {
+            tcpClient.Close();
+        }
     }
 }

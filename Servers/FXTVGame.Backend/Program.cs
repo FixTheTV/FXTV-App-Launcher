@@ -1,127 +1,139 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
+﻿using FXTVGame.Backend.Network;
+using FXTVGame.Backend.Services;
+using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using FXTVGame.Backend.Services;
 
+ConcurrentDictionary<long, ClientPeer> peers = new ConcurrentDictionary<long, ClientPeer>();
 TcpListener tcpListener = new TcpListener(IPAddress.Any, 12345);
-PacketService packetService = new PacketService();
 tcpListener.Start();
+
+PacketService packetService = new PacketService();
+DatabaseService databaseService = new DatabaseService();
+
+Console.WriteLine("Server Started on Port 12345...");
 
 while (true)
 {
-    var tcpClient = await tcpListener.AcceptTcpClientAsync();
-    Console.WriteLine("SOMEONE CONNECTED");
-    _ = HandleClientAsync(tcpClient);    
+    try
+    {
+        TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
+
+        ClientPeer peer = new ClientPeer(tcpClient);
+        Console.WriteLine($"[Connect] Client connected from {tcpClient.Client.RemoteEndPoint}");
+
+        _ = Task.Run(() => HandleClientAsync(peer));
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Accept Error] {ex.Message}");
+    }
 }
 
-async Task HandleClientAsync(TcpClient tcpClient)
+async Task HandleClientAsync(ClientPeer peer)
 {
-    using (tcpClient)
+    using (peer.Socket)
     {
-        NetworkStream netStream = tcpClient.GetStream();
+        NetworkStream netStream = peer.Socket.GetStream();
         byte[] headerBuffer = new byte[6];
 
         try
         {
-
-            while (tcpClient.Connected)
+            while (peer.Socket.Connected)
             {
-
-                int headerBytesRead = await netStream.ReadAsync(headerBuffer, 0, headerBuffer.Length);
-
-                if (headerBytesRead == 0) break;
-                if (headerBytesRead < 6) continue;
+                await ReadExactAsync(netStream, headerBuffer, 6);
 
                 int totalLength = BitConverter.ToInt32(headerBuffer, 0);
-                int opCode = BitConverter.ToInt16(headerBuffer, 4);
+                ushort opCode = BitConverter.ToUInt16(headerBuffer, 4);
 
                 int payloadLength = totalLength - 6;
                 byte[] payloadBuffer = new byte[payloadLength];
-                int payloadByteRead = await netStream.ReadAsync(payloadBuffer, 0, payloadLength);
 
+                await ReadExactAsync(netStream, payloadBuffer, payloadLength);
 
-                if (opCode == 1001)
+                switch (opCode)
                 {
-                    await HandleLoginAsync(payloadBuffer, netStream);
-                }
-                if (opCode == 1002)
-                {
-                    await HandleRegisterAsync(payloadBuffer, netStream);
+                    case Opcodes.C2S_Login:
+                        if (peer.State == ClientState.Connected)
+                        {
+                            await HandleLoginAsync(peer, payloadBuffer, netStream);
+                        }
+                        break;
+
+                    case Opcodes.C2S_Register:
+                        if (peer.State == ClientState.Connected)
+                        {
+                            await HandleRegisterAsync(peer, payloadBuffer, netStream);
+                        }
+                        break;
+
+                    default:
+                        Console.WriteLine($"[Warning] Unknown Opcode: {opCode}");
+                        break;
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Client xay ra loi: {ex.Message}");
+            Console.WriteLine($"[Client Loop Error] {ex.Message}");
         }
 
-        Console.WriteLine("CLIENT DISCONNECTED");
+        if (peer.UserId > 0)
+        {
+            peers.TryRemove(peer.UserId, out _);
+        }
+        string clientPort = ((IPEndPoint)peer.Socket.Client.RemoteEndPoint).Port.ToString();
+
+        Console.WriteLine($"[Disconnect] User ID: {peer.UserId} (Session Port: {clientPort}) disconnected.");
     }
 }
 
-async Task HandleLoginAsync(byte[] payloadBuffer, NetworkStream network)
+async Task HandleLoginAsync(ClientPeer peer, byte[] payloadBuffer, NetworkStream network)
 {
     int currentOffset = 0;
-    byte usernameLength = payloadBuffer[currentOffset];
-    currentOffset++;
-
+    byte usernameLength = payloadBuffer[currentOffset++];
     string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
     currentOffset += usernameLength;
 
-
-    byte passLength = payloadBuffer[currentOffset];
-    currentOffset++;
-
+    byte passLength = payloadBuffer[currentOffset++];
     string password = Encoding.UTF8.GetString(payloadBuffer, currentOffset, passLength);
-    currentOffset += passLength;
 
-    Console.WriteLine($"Backend phat hien yeu cau dang nhap:\nUser = {username}, Pass = {password}");
+    Console.WriteLine($"[Login Request] User = {username}");
 
-    var databaseService = new DatabaseService();
     var databaseResult = await databaseService.CheckIfUserExistsAndGetIdAsync(username);
     byte[] packet;
 
-    if (!databaseResult.SearchResult)
+    if (!databaseResult.SearchResult || !await databaseService.CheckPasswordAsync(databaseResult.UserId, password))
     {
         packet = packetService.CreateLoginResultPacket(false, username);
-        Console.WriteLine("Search failed");
+        Console.WriteLine("Login Failed");
     }
     else
     {
-        if ( !await databaseService.CheckPasswordAsync(databaseResult.UserId, password))
-        {
-            packet = packetService.CreateLoginResultPacket(false, username);
-            Console.WriteLine("Check pass wrong");
-        }   
-        else
-        {
-            packet = packetService.CreateLoginResultPacket(true, username, databaseResult.UserId);
-            Console.WriteLine("Login Succeed");
-        }
+        
+        peer.UserId = databaseResult.UserId;
+        peer.Username = username;
+        peer.State = ClientState.Authenticated; 
+        
+        packet = packetService.CreateLoginResultPacket(true, username, peer.UserId);
+        peers.TryAdd(peer.UserId, peer);
+        Console.WriteLine($"Login Succeed! Generated Token for User {peer.UserId}");
     }
-    await network.WriteAsync(packet, 0, packet.Length);
 
+    await network.WriteAsync(packet, 0, packet.Length);
 }
-async Task HandleRegisterAsync(byte[] payloadBuffer, NetworkStream network)
+
+async Task HandleRegisterAsync(ClientPeer peer, byte[] payloadBuffer, NetworkStream network)
 {
     int currentOffset = 0;
-    byte usernameLength = payloadBuffer[currentOffset];
-    currentOffset++;
-
+    byte usernameLength = payloadBuffer[currentOffset++];
     string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
     currentOffset += usernameLength;
 
-
-    byte passLength = payloadBuffer[currentOffset];
-    currentOffset++;
-
+    byte passLength = payloadBuffer[currentOffset++];
     string password = Encoding.UTF8.GetString(payloadBuffer, currentOffset, passLength);
-    currentOffset += passLength;
 
-    Console.WriteLine($"Backend phat hien yeu cau dang ki:\nUser = {username}, Pass = {password}");
-
-    var databaseService = new DatabaseService();
     var databaseResult = await databaseService.CheckIfUserExistsAndGetIdAsync(username);
     byte[] packet;
 
@@ -134,6 +146,17 @@ async Task HandleRegisterAsync(byte[] payloadBuffer, NetworkStream network)
         await databaseService.AddUserAsync(username, password);
         packet = packetService.CreateRegisterResultPacket(true, username);
     }
+
     await network.WriteAsync(packet, 0, packet.Length);
 }
 
+async Task ReadExactAsync(NetworkStream stream, byte[] buffer, int bytesToRead)
+{
+    int totalBytesRead = 0;
+    while (totalBytesRead < bytesToRead)
+    {
+        int bytesRead = await stream.ReadAsync(buffer, totalBytesRead, bytesToRead - totalBytesRead);
+        if (bytesRead == 0) throw new EndOfStreamException("Kết nối mạng bị đóng bất ngờ!");
+        totalBytesRead += bytesRead;
+    }
+}
