@@ -11,7 +11,7 @@ namespace FXTVGame.Launcher.Services
 {
     internal class RegisterService
     {
-        private readonly NetworkService network = new NetworkService();
+        private readonly NetworkService network = NetworkService.Shared;
         public async Task<RegisterResult> ValidateRegForm(string username_form, string password_form, string repassword_form)
         {
             if (username_form.Length < 3)
@@ -46,7 +46,7 @@ namespace FXTVGame.Launcher.Services
         }
         public async Task ConnectBoisss()
         {
-            await network.ConnectAsync("192.168.1.217", 12345);
+            await network.ConnectAsync("192.168.1.239", 12345);
         }
 
     }

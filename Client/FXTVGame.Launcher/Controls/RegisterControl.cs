@@ -29,7 +29,17 @@ namespace FXTVGame.Launcher.Controls
             string passwordField = password_textbox.Text;
             string repasswordField = retype_password_textbox.Text;
 
-            var check = await regService.ValidateRegForm(usernameField,passwordField,repasswordField);
+            var check = new Models.Register.RegisterResult();
+
+            try
+            {
+                check = await regService.ValidateRegForm(usernameField,passwordField,repasswordField);
+            }
+            catch
+            {
+                MessageBox.Show("Cannot connect to server.");
+                return;
+            }
 
             if (check.Success)
             {

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+
+
 namespace FXTVGame.Launcher.Services
 {
     internal class PacketService
@@ -9,6 +11,10 @@ namespace FXTVGame.Launcher.Services
         
         private const int LOGIN_REQ_HEADER_LENGTH = 8;
         private const int REG_REQ_HEADER_LENGTH = 8;
+        private const int HEADER_LENGTH = 6;
+        private const int C2S_LOGOUT = 1003;
+        private const int C2S_JOIN_LOBBY = 1101;
+        private const int C2S_LOBBY_CHAT = 1102;
 
         public byte[] CreatePacketHeader(int totalPackgetlength, int opCode)
         {
@@ -70,6 +76,43 @@ namespace FXTVGame.Launcher.Services
             Array.Copy(Encoding.UTF8.GetBytes(password), 0, registerPacket, currentOffset, passwordLengthInBytes);
 
             return registerPacket;
+        }
+
+        public byte[] CreateLogoutRequestPacket()
+        {
+            int totalLength = HEADER_LENGTH;
+            byte[] logoutPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, C2S_LOGOUT), logoutPacket, HEADER_LENGTH);
+
+            return logoutPacket;
+        }
+
+        public byte[] CreateJoinLobbyRequestPacket(int lobbyId)
+        {
+            int totalLength = HEADER_LENGTH + 4;
+            byte[] joinLobbyPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, C2S_JOIN_LOBBY), joinLobbyPacket, HEADER_LENGTH);
+            Array.Copy(BitConverter.GetBytes(lobbyId), 0, joinLobbyPacket, HEADER_LENGTH, 4);
+
+            return joinLobbyPacket;
+        }
+
+        public byte[] CreateLobbyChatPacket(string message)
+        {
+            int messageLength = Encoding.UTF8.GetByteCount(message);
+            int totalLength = HEADER_LENGTH + 2 + messageLength;
+            byte[] chatPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, C2S_LOBBY_CHAT), chatPacket, HEADER_LENGTH);
+
+            int currentOffset = HEADER_LENGTH;
+            Array.Copy(BitConverter.GetBytes((ushort)messageLength), 0, chatPacket, currentOffset, 2);
+            currentOffset += 2;
+            Array.Copy(Encoding.UTF8.GetBytes(message), 0, chatPacket, currentOffset, messageLength);
+
+            return chatPacket;
         }
     }
 }

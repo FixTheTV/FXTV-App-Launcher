@@ -1,51 +1,81 @@
-# Giao thức Mạng Hệ thống FXTVGame (Dạng Binary Thô)
+# FXTVGame Binary Protocol
 
-## 1. Cấu trúc khung gói tin tổng quát (Packet Header)
-Mọi gói tin truyền qua mạng bắt buộc phải bắt đầu bằng 6 byte Header cố định:
+Every packet starts with a fixed 6-byte header:
 
-- [0 -> 3] (4 bytes): **Length** (Int32) - Tổng độ dài toàn bộ gói tin.
-- [4 -> 5] (2 bytes): **Opcode** (Int16) - Mã định danh loại lệnh.
+- `[0..3] int32`: total packet length, including header
+- `[4..5] uint16`: opcode
 
----
+All strings are UTF-8.
 
-## 2. Chi tiết cấu trúc Payload theo từng Opcode
+## Auth
 
+### `1001` C2S_Login
 
-### Opcode 1001: Client gui login request (Client -> Backend)
+- `byte usernameLength`
+- `byte[] username`
+- `byte passwordLength`
+- `byte[] password`
 
-- **Cấu trúc chi tiết:**
-	+ [6] (1 byte): **User Length** - Độ dài username (max 255 ký tự).
-	+ [7 -> ...] (byte[]): **Username** - Mảng byte chứa tên tk.
-	+ [... -> ... + 1] (byte) : **Password Length** - Độ dài password. 
-	+ [... -> ...] (byte[]) : **Password** - Mảng byte chứa password.
+### `2001` S2C_LoginResult
 
-### Opcode 1002: Client gui register request (Client -> Backend)
+Fail:
 
-- **Cấu trúc chi tiết:**
-	+ [6] (1 byte): **User Length** - Độ dài username (max 255 ký tự).
-	+ [7 -> ...] (byte[]): **Username** - Mảng byte chứa tên tk.
-	+ [... -> ... + 1] (1 byte) : **Password Length** - Độ dài password. 
-	+ [... -> ...] (byte[]) : **Password** - Mảng byte chứa password.
+- `byte result = 0`
 
-### Opcode 2001: Backend gui login result (Backend -> Client)
+Success:
 
-- **Cấu trúc chi tiết: NEU FAIL **
-	+ [6] (1 byte): **Auth result** = 0 - Kết quả.
-- **Cấu trúc chi tiết: NEU SUCC **
-	+ [6] (1 byte): **Auth result** = 1 - Kết quả
-	+ [7] (1 byte): **Username Length** - Độ dài username (max 255 char).
-	+ [8 - n] (byte[]): **Username** - Mảng byte chứa tên tk vừa đăng nhập.
-	+ [n+1 - n+8] ( 8 byte ): **UserID** - 8 byte chứ userid.
+- `byte result = 1`
+- `byte usernameLength`
+- `byte[] username`
+- `int64 userId`
 
+### `1002` C2S_Register
 
-### Opcode 2002: Backend gui register result (Backend -> Client)
+- `byte usernameLength`
+- `byte[] username`
+- `byte passwordLength`
+- `byte[] password`
 
-- **Cấu trúc chi tiết:**
-- **Cấu trúc chi tiết: NEU FAIL **
-	+ [6] (1 byte): **Auth result** = 0 - Kết quả.
-- **Cấu trúc chi tiết: NEU SUCC **
-	+ [6] (1 byte): **Auth result** = 1 - Kết quả
-	+ [7] (1 byte): **Username Length** - Độ dài username (max 255 char).
-	+ [8 - n] (byte[]): **Username** - Mảng byte chứa tên tk vừa đki.
+### `2002` S2C_RegisterResult
 
+Fail:
 
+- `byte result = 0`
+
+Success:
+
+- `byte result = 1`
+- `byte usernameLength`
+- `byte[] username`
+
+### `1003` C2S_Logout
+
+No payload.
+
+### `2003` S2C_LogoutResult
+
+- `byte result`
+
+## Lobby
+
+### `1101` C2S_JoinLobby
+
+- `int32 lobbyId`
+
+### `2101` S2C_JoinLobbyResult
+
+- `byte result`
+- `int32 lobbyId`
+- `int32 playerCount`
+
+### `1102` C2S_LobbyChat
+
+- `uint16 messageLength`
+- `byte[] message`
+
+### `2102` S2C_LobbyChat
+
+- `uint16 usernameLength`
+- `byte[] username`
+- `uint16 messageLength`
+- `byte[] message`

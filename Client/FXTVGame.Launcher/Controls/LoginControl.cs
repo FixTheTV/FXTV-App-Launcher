@@ -19,12 +19,20 @@ namespace FXTVGame.Launcher.Controls
 
         public async void btnLogin_Click(object arg, EventArgs e)
         {
-           await authService.ConnectBoisss();
+            try
+            {
+                await authService.ConnectBoisss();
 
-           await authService.Login(
-                username_textbox.Text,
-                password_textbox.Text
-            );
+                await authService.Login(
+                    username_textbox.Text,
+                    password_textbox.Text
+                );
+            }
+            catch
+            {
+                MessageBox.Show("Cannot connect to server.");
+                return;
+            }
 
 
             if (!authService.authResult.Success)

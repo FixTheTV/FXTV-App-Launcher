@@ -10,7 +10,8 @@ namespace FXTVGame.Backend.Network
         public TcpClient Socket { get; private set; }
         public ClientState State { get; set; } = ClientState.Connected;
         public long UserId { get; set; }
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public int? LobbyId { get; set; }
 
         public ClientPeer(TcpClient socket)
         {

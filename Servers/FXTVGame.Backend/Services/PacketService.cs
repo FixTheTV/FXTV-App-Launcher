@@ -165,5 +165,54 @@ namespace FXTVGame.Backend.Services
             //packet if succ [0 - 3 Length] [4 - 5 OPCode] [6 Result] [7 Username Length] [8 - ... Username] [... - ... + 8 UserID]
             //packet if fail [0 - 3 Length] [4 - 5 OPCode] [6 Result]
         }
+
+        public byte[] CreateLogoutResultPacket(bool res)
+        {
+            int totalLength = HEADER_LENGTH + 1;
+            byte[] logoutResPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_LogoutResult), logoutResPacket, HEADER_LENGTH);
+            logoutResPacket[HEADER_LENGTH] = res ? (byte)1 : (byte)0;
+
+            return logoutResPacket;
+        }
+
+        public byte[] CreateJoinLobbyResultPacket(bool res, int lobbyId, int playerCount)
+        {
+            int totalLength = HEADER_LENGTH + 9;
+            byte[] joinLobbyResPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_JoinLobbyResult), joinLobbyResPacket, HEADER_LENGTH);
+
+            int currentOffset = HEADER_LENGTH;
+            joinLobbyResPacket[currentOffset++] = res ? (byte)1 : (byte)0;
+            Array.Copy(BitConverter.GetBytes(lobbyId), 0, joinLobbyResPacket, currentOffset, 4);
+            currentOffset += 4;
+            Array.Copy(BitConverter.GetBytes(playerCount), 0, joinLobbyResPacket, currentOffset, 4);
+
+            return joinLobbyResPacket;
+        }
+
+        public byte[] CreateLobbyChatPacket(string username, string message)
+        {
+            int usernameLength = Encoding.UTF8.GetByteCount(username);
+            int messageLength = Encoding.UTF8.GetByteCount(message);
+            int totalLength = HEADER_LENGTH + 2 + usernameLength + 2 + messageLength;
+            byte[] chatPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_LobbyChat), chatPacket, HEADER_LENGTH);
+
+            int currentOffset = HEADER_LENGTH;
+            Array.Copy(BitConverter.GetBytes((ushort)usernameLength), 0, chatPacket, currentOffset, 2);
+            currentOffset += 2;
+            Array.Copy(Encoding.UTF8.GetBytes(username), 0, chatPacket, currentOffset, usernameLength);
+            currentOffset += usernameLength;
+
+            Array.Copy(BitConverter.GetBytes((ushort)messageLength), 0, chatPacket, currentOffset, 2);
+            currentOffset += 2;
+            Array.Copy(Encoding.UTF8.GetBytes(message), 0, chatPacket, currentOffset, messageLength);
+
+            return chatPacket;
+        }
     }
 }

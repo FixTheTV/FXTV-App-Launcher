@@ -9,7 +9,7 @@ namespace FXTVGame.Launcher.Services.Auth
 {
     public class AuthService
     {
-        private readonly NetworkService networkService = new NetworkService();
+        private readonly NetworkService networkService = NetworkService.Shared;
 
         public AuthResult authResult = new AuthResult { Success = false, Message = "Failed to Login", UserId = 0, Username = "placeholder" };
         public AuthService()
@@ -25,7 +25,7 @@ namespace FXTVGame.Launcher.Services.Auth
 
         public async Task ConnectBoisss()
         {
-            await networkService.ConnectAsync("192.168.1.217",12345);
+            await networkService.ConnectAsync("192.168.1.239",12345);   
         }
 
         public async Task SendLoginAsync(string username, string password)

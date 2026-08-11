@@ -12,7 +12,7 @@ namespace FXTVGame.Launcher.Controls
 {
     public partial class LogoutConfirmationDialog : UserControl
     {
-        private readonly NetworkService networkService = new NetworkService();
+        private readonly NetworkService networkService = NetworkService.Shared;
         public event Action? ConfirmLogOut;
 
         public LogoutConfirmationDialog()
@@ -22,7 +22,7 @@ namespace FXTVGame.Launcher.Controls
 
         private async void logout_confirm_button_Click(object sender, EventArgs e)
         {
-            await networkService.DisconnectAsync();
+            await networkService.LogoutAsync();
             ConfirmLogOut?.Invoke();
         }
 
