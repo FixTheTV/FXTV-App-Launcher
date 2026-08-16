@@ -22,8 +22,7 @@ namespace FXTVGame.Launcher.Controls
         {
             var logoutConfirmationDialog = new LogoutConfirmationDialog();
 
-            logoutConfirmationDialog.ConfirmLogOut += OnLogoutConfirmed;
-
+            logoutConfirmationDialog.ConfirmLogOut += OnLogoutConfirmed; 
             logoutConfirmationDialog.Location = new Point(
                 (Width - logoutConfirmationDialog.Width) / 2,
                 (Height - logoutConfirmationDialog.Height) / 2

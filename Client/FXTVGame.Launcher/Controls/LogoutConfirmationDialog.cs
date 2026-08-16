@@ -22,8 +22,8 @@ namespace FXTVGame.Launcher.Controls
 
         private async void logout_confirm_button_Click(object sender, EventArgs e)
         {
-            await networkService.LogoutAsync();
-            ConfirmLogOut?.Invoke();
+            await networkService.LogoutAsync(); 
+            ConfirmLogOut?.Invoke(); 
         }
 
         private async void logout_cancel_button_Click(object sender, EventArgs e)

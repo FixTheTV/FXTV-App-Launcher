@@ -31,10 +31,16 @@ namespace FXTVGame.Launcher.Services
                 return;
             }
 
-            tcpClient.Dispose();
+            tcpClient?.Dispose();
             tcpClient = new TcpClient();
 
-            var convertedIP = IPAddress.Parse(ip);
+
+            if (!IPAddress.TryParse(ip, out var convertedIP))
+            {
+                throw new ArgumentException("Định dạng IP không hợp lệ", nameof(ip));
+            }
+
+            
             await tcpClient.ConnectAsync(convertedIP, port);
         }
 

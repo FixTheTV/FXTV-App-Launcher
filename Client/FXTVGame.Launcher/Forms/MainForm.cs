@@ -8,7 +8,7 @@ namespace FXTVGame.Launcher.Forms
     {
         private readonly LauncherPreferenceService preferenceService = new LauncherPreferenceService();
         private string? CurrentUserSession;
-        public MainForm()
+        public  MainForm()
         {
             InitializeComponent();
             ShowMain();
@@ -38,7 +38,7 @@ namespace FXTVGame.Launcher.Forms
             }
 
             var homeControl = new HomeControl(CurrentUserSession);
-            homeControl.LogoutRequested += Logout;
+            homeControl.LogoutRequested += Logout; 
             homeControl.GoToSetting += ShowSetting;
             homeControl.PlayOnline += ShowFindLobby;
             ShowScreen(homeControl);
