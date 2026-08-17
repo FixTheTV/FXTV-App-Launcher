@@ -11,7 +11,7 @@ This project is part of my journey learning desktop application development, net
 
 - .NET
 - WinForms
-- SQLite
+- MySQL
 
 ## Tools
 
