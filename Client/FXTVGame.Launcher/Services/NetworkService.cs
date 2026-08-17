@@ -16,6 +16,7 @@ namespace FXTVGame.Launcher.Services
         private bool isReceivingLobbyChat;
 
         public event Action<LobbyChatMessage>? LobbyChatReceived;
+        public event Action<int>? UpdateLobbyCount;
 
         private NetworkService()
         {
@@ -131,12 +132,24 @@ namespace FXTVGame.Launcher.Services
                     {
                         LobbyChatReceived?.Invoke(HandleLobbyChatMessage(packet.Payload));
                     }
+                    if (packet.OpCode == 2103)
+                    {
+                        UpdateLobbyCount?.Invoke(HandleUpdateLobbyCount(packet.Payload));
+                    }
                 }
             }
             catch
             {
                 isReceivingLobbyChat = false;
             }
+        }
+
+        private int HandleUpdateLobbyCount(byte[] payloadBuffer)
+        {
+
+            int count = BitConverter.ToInt32(payloadBuffer, 0);
+
+            return count;
         }
 
         private RegisterResult HandleRegisterResult(byte[] payloadBuffer)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Security;
 using System.Text;
 
 using FXTVGame.Backend.Network;
@@ -191,6 +192,20 @@ namespace FXTVGame.Backend.Services
             Array.Copy(BitConverter.GetBytes(playerCount), 0, joinLobbyResPacket, currentOffset, 4);
 
             return joinLobbyResPacket;
+        }
+
+        public byte[] CreateUpdateCountLobbyPacket(int count)
+        {
+            int totalLength = HEADER_LENGTH + 4;
+            byte[] updateCurrentCountLobbyPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_UpdateLobbyCount), updateCurrentCountLobbyPacket, HEADER_LENGTH);
+
+            int currentOffset = 6;
+            Array.Copy(BitConverter.GetBytes(count), 0, updateCurrentCountLobbyPacket, currentOffset, 4);
+
+            return updateCurrentCountLobbyPacket;
+
         }
 
         public byte[] CreateLobbyChatPacket(string username, string message)

@@ -17,11 +17,11 @@ namespace FXTVGame.Backend.Services
         {
             using (var connection = new MySqlConnection(connectionString))
             {
-                connection.Open();
+                    connection.Open();
 
-                using (var createTableCmd = connection.CreateCommand())
-                {
-                    createTableCmd.CommandText = @"
+                    using (var createTableCmd = connection.CreateCommand())
+                    {
+                        createTableCmd.CommandText = @"
                     CREATE TABLE IF NOT EXISTS users (
                         id BIGINT AUTO_INCREMENT PRIMARY KEY,
                         username VARCHAR(50) NOT NULL UNIQUE,
@@ -29,8 +29,11 @@ namespace FXTVGame.Backend.Services
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
-                    createTableCmd.ExecuteNonQuery();
-                }
+                        createTableCmd.ExecuteNonQuery();
+                    }
+              
+
+
             }
         }
 

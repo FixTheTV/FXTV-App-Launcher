@@ -7,20 +7,13 @@ namespace FXTVGame.Launcher.Controls
     {
         private readonly NetworkService networkService = NetworkService.Shared;
 
+        public event Action<JoinLobbyResult>? GoToLobby;
+
         public FindLobbyControl()
         {
             InitializeComponent();
-            chat_input_textbox.Enabled = false;
-            send_chat_button.Enabled = false;
-            networkService.LobbyChatReceived += OnLobbyChatReceived;
         }
 
-        protected override void OnHandleDestroyed(EventArgs e)
-        {
-            networkService.LobbyChatReceived -= OnLobbyChatReceived;
-            networkService.StopLobbyChatReceiveLoop();
-            base.OnHandleDestroyed(e);
-        }
 
         private async void confirm_lobby_id_button_Click(object sender, EventArgs e)
         {
@@ -41,9 +34,7 @@ namespace FXTVGame.Launcher.Controls
                     return;
                 }
 
-                lobby_status_label.Text = result.Message;
-                chat_input_textbox.Enabled = true;
-                send_chat_button.Enabled = true;
+                GoToLobby?.Invoke(result);
                 networkService.StartLobbyChatReceiveLoop();
             }
             catch
@@ -52,35 +43,5 @@ namespace FXTVGame.Launcher.Controls
             }
         }
 
-        private async void send_chat_button_Click(object sender, EventArgs e)
-        {
-            string message = chat_input_textbox.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return;
-            }
-
-            try
-            {
-                await networkService.SendLobbyChatPacket(message);
-                chat_input_textbox.Clear();
-            }
-            catch
-            {
-                MessageBox.Show("Failed to send message.");
-            }
-        }
-
-        private void OnLobbyChatReceived(LobbyChatMessage chatMessage)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(() => OnLobbyChatReceived(chatMessage));
-                return;
-            }
-
-            chat_history_textbox.AppendText($"{chatMessage.Username}: {chatMessage.Message}{Environment.NewLine}");
-        }
     }
 }

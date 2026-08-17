@@ -20,5 +20,7 @@ namespace FXTVGame.Backend.Network
 
         public const ushort C2S_LobbyChat = 1102;
         public const ushort S2C_LobbyChat = 2102;
+
+        public const ushort S2C_UpdateLobbyCount = 2103;
     }
 }

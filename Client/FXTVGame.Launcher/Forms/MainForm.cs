@@ -29,6 +29,20 @@ namespace FXTVGame.Launcher.Forms
             ShowHomeFromSession();
         }
 
+        private void ShowFindLobby()
+        {
+            var findLobbyControl = new FindLobbyControl();
+            findLobbyControl.GoToLobby += ShowLobby;
+            ShowScreen(findLobbyControl);
+        }
+
+
+        private void ShowLobby(JoinLobbyResult res)
+        {
+            var lobbyControl = new LobbyControl(res);
+            ShowScreen(lobbyControl);
+        }
+
         private void ShowHomeFromSession()
         {
             if (string.IsNullOrWhiteSpace(CurrentUserSession))
@@ -74,12 +88,6 @@ namespace FXTVGame.Launcher.Forms
             CurrentUserSession = null;
             ShowMain();
         }
-        private void ShowFindLobby()
-        {
-            var findLobbyControl = new FindLobbyControl();
-            ShowScreen(findLobbyControl);
-        }
-
 
         private void ShowScreen(UserControl screen)
         {
