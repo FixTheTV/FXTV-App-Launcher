@@ -15,11 +15,17 @@ namespace FXTVGame.Backend.Network
         public const ushort C2S_Logout = 1003;
         public const ushort S2C_LogoutResult = 2003;
 
+        public const ushort C2S_LeaveLobby = 1104;
+        public const ushort S2C_LeaveLobby = 2104;
+        public const ushort S2C_LobbyTabUpdate = 2105;
+
         public const ushort C2S_JoinLobby = 1101;
         public const ushort S2C_JoinLobbyResult = 2101;
 
         public const ushort C2S_LobbyChat = 1102;
         public const ushort S2C_LobbyChat = 2102;
+
+        public const ushort C2S_LobbyReady = 1103;
 
         public const ushort S2C_UpdateLobbyCount = 2103;
     }

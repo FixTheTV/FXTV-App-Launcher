@@ -229,5 +229,27 @@ namespace FXTVGame.Backend.Services
 
             return chatPacket;
         }
+
+        public byte[] CreateUpdateLobbyTabPacket(string name, byte slot, bool isReady)
+        {
+            int usernameLength = Encoding.UTF8.GetByteCount(name);
+            int totalLength = HEADER_LENGTH + usernameLength + 2 + 1 + 1;
+
+            byte[] packet = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_LobbyTabUpdate), packet, HEADER_LENGTH);
+
+            int currentOffset = HEADER_LENGTH;
+            Array.Copy(BitConverter.GetBytes((ushort)usernameLength), 0, packet, currentOffset, 2);
+            currentOffset += 2;
+            Array.Copy(Encoding.UTF8.GetBytes(name), 0, packet, currentOffset, usernameLength);
+            currentOffset += usernameLength;
+            packet[currentOffset] = slot;
+            currentOffset++;
+            packet[currentOffset] = isReady ? (byte)1 : (byte)0;
+
+            return packet;
+
+        }
     }
 }

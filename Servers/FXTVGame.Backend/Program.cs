@@ -91,6 +91,21 @@ async Task HandleClientAsync(ClientPeer peer)
                         }
                         break;
 
+                    case Opcodes.C2S_LobbyReady:
+                        if (peer.State == ClientState.InLobby)
+                        {
+                            await HandleLobbyReadyAsync(peer, payloadBuffer);
+                        }
+                        break;
+
+                    case Opcodes.C2S_LeaveLobby:
+                        if (peer.State == ClientState.InLobby)
+                        {
+                            await HandleLeaveLobbyAsync(peer, netStream);
+                            
+                        }
+                        break;
+
                     default:
                         Console.WriteLine($"[Warning] Unknown Opcode: {opCode}");
                         break;
@@ -192,22 +207,124 @@ async Task HandleJoinLobbyAsync(ClientPeer peer, byte[] payloadBuffer, NetworkSt
 {
     int lobbyId = BitConverter.ToInt32(payloadBuffer, 0);
 
-   await RemovePeerFromLobby(peer);
+    await RemovePeerFromLobby(peer);
 
     Lobby lobby = lobbies.GetOrAdd(lobbyId, id => new Lobby(id));
-    lobby.Peers[peer.UserId] = peer;
+
+    byte[] packet;
+    bool joinedLobby;
+    int playerCount;
+
+    lock (lobby.SyncRoot)
+    {
+        if (lobby.Peers.Count >= lobby.PeerSlots.Length)
+        {
+            packet = packetService.CreateJoinLobbyResultPacket(false, lobbyId, lobby.Peers.Count);
+            playerCount = lobby.Peers.Count;
+            joinedLobby = false;
+        }
+        else
+        {
+            for (int i = 0; i < lobby.PeerSlots.Length; i++)
+            {
+                if (lobby.PeerSlots[i] == null)
+                {
+                    lobby.PeerSlots[i] = peer;
+                    break;
+                }
+            }
+
+            lobby.Peers[peer.UserId] = peer;
+            playerCount = lobby.Peers.Count;
+            packet = packetService.CreateJoinLobbyResultPacket(true, lobbyId, playerCount);
+            joinedLobby = true;
+        }
+    }
+
+    if (!joinedLobby)
+    {
+        await network.WriteAsync(packet, 0, packet.Length);
+        return;
+    }
 
     peer.LobbyId = lobbyId;
     peer.State = ClientState.InLobby;
+    peer.IsReady = false;
 
-    byte[] packet = packetService.CreateJoinLobbyResultPacket(true, lobbyId, lobby.Peers.Count);
     await network.WriteAsync(packet, 0, packet.Length);
 
-    await BroadcastUpdateLobbyCount(lobby, lobby.Peers.Count);
+    await BroadcastUpdateLobbyCount(lobby, playerCount);
+    await BroadcastLobbyTabsAsync(lobby);
     await BroadcastLobbyChatAsync(lobby, "Server", $"{peer.Username} joined lobby {lobbyId}.");
 }
 
 
+async Task BroadcastLobbyTabsAsync(Lobby lobby)
+{
+    List<(string Name, byte Slot, bool IsReady)> lobbyTabs = new List<(string Name, byte Slot, bool IsReady)>();
+
+    lock (lobby.SyncRoot)
+    {
+        for (byte i = 0; i < lobby.PeerSlots.Length; i++)
+        {
+            ClientPeer? slotPeer = lobby.PeerSlots[i];
+            lobbyTabs.Add((slotPeer?.Username ?? string.Empty, i, slotPeer?.IsReady ?? false));
+        }
+    }
+
+    foreach ((string name, byte slot, bool isReady) in lobbyTabs)
+    {
+        await BroadcastUpdateLobbyTab(lobby, name, slot, isReady);
+    }
+}
+
+async Task BroadcastUpdateLobbyTab(Lobby lobby, string name, byte slot, bool isReady)
+{
+    byte[] packet = packetService.CreateUpdateLobbyTabPacket(name, slot, isReady);
+    List<long> disconnectedPeers = new List<long>();
+
+    foreach (var peerEntry in lobby.Peers)
+    {
+        ClientPeer targetPeer = peerEntry.Value;
+
+        try
+        {
+            NetworkStream stream = targetPeer.Socket.GetStream();
+            await stream.WriteAsync(packet, 0, packet.Length);
+        }
+        catch
+        {
+            disconnectedPeers.Add(peerEntry.Key);
+        }
+    }
+
+    foreach (long userId in disconnectedPeers)
+    {
+        RemovePeerFromLobbyState(lobby, userId);
+    }
+}
+
+async Task HandleLobbyReadyAsync(ClientPeer peer, byte[] payloadBuffer)
+{
+    if (peer.LobbyId == null || payloadBuffer.Length < 1)
+    {
+        return;
+    }
+
+    peer.IsReady = payloadBuffer[0] == 1;
+
+    if (lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
+    {
+        await BroadcastLobbyTabsAsync(lobby);
+    }
+}
+
+async Task HandleLeaveLobbyAsync(ClientPeer peer, NetworkStream netStream)
+{
+    byte[] packet = packetService.CreatePacketHeader(6, 2104);
+    await RemovePeerFromLobby(peer);
+    await netStream.WriteAsync(packet);
+}
 async Task BroadcastUpdateLobbyCount(Lobby lobby, int count)
 {
     byte[] packet = packetService.CreateUpdateCountLobbyPacket(count);
@@ -230,7 +347,7 @@ async Task BroadcastUpdateLobbyCount(Lobby lobby, int count)
 
     foreach (long userId in disconnectedPeers)
     {
-        lobby.Peers.TryRemove(userId, out _);
+        RemovePeerFromLobbyState(lobby, userId);
     }
 }
 
@@ -276,7 +393,7 @@ async Task BroadcastLobbyChatAsync(Lobby lobby, string username, string message)
 
     foreach (long userId in disconnectedPeers)
     {
-        lobby.Peers.TryRemove(userId, out _);
+        RemovePeerFromLobbyState(lobby, userId);
     }
 }
 
@@ -287,9 +404,15 @@ async Task RemovePeerFromLobby(ClientPeer peer)
         return;
     }
 
+    string username = peer.Username;
+    int lobbyId = peer.LobbyId.Value;
+    Lobby? lobbyToUpdate = null;
+    int playerCount = 0;
+
     if (lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
     {
-        lobby.Peers.TryRemove(peer.UserId, out _);
+        RemovePeerFromLobbyState(lobby, peer.UserId);
+        playerCount = lobby.Peers.Count;
 
         if (lobby.Peers.IsEmpty)
         {
@@ -297,8 +420,7 @@ async Task RemovePeerFromLobby(ClientPeer peer)
         }
         else
         {
-            await BroadcastUpdateLobbyCount(lobby, lobby.Peers.Count);
-            await BroadcastLobbyChatAsync(lobby, "Server", $"{peer.Username} left lobby {lobby.Id}.");
+            lobbyToUpdate = lobby;
         }
     }
 
@@ -307,6 +429,29 @@ async Task RemovePeerFromLobby(ClientPeer peer)
     if (peer.UserId > 0)
     {
         peer.State = ClientState.Authenticated;
+    }
+
+    if (lobbyToUpdate != null)
+    {
+        await BroadcastUpdateLobbyCount(lobbyToUpdate, playerCount);
+        await BroadcastLobbyTabsAsync(lobbyToUpdate);
+        await BroadcastLobbyChatAsync(lobbyToUpdate, "Server", $"{username} left lobby {lobbyId}.");
+    }
+}
+
+void RemovePeerFromLobbyState(Lobby lobby, long userId)
+{
+    lock (lobby.SyncRoot)
+    {
+        lobby.Peers.TryRemove(userId, out _);
+
+        for (int i = 0; i < lobby.PeerSlots.Length; i++)
+        {
+            if (lobby.PeerSlots[i]?.UserId == userId)
+            {
+                lobby.PeerSlots[i] = null;
+            }
+        }
     }
 }
 

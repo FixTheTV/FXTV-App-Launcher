@@ -46,7 +46,15 @@ namespace FXTVGame.Launcher.Services
         }
         public async Task ConnectBoisss()
         {
-            await network.ConnectAsync("192.168.1.200", 12345);
+            // This picks this PC's LAN IPv4, for example 192.168.x.x.
+            // Use it when the backend server is running on the same PC as the launcher.
+            string serverIpAddress = NetworkService.GetLocalIPv4Address();
+
+            // If the backend server is running on another PC, comment the auto line above
+            // and uncomment this manual LAN IP line instead.
+            // string serverIpAddress = "192.168.1.142";
+
+            await network.ConnectAsync(serverIpAddress, 12345);
         }
 
     }

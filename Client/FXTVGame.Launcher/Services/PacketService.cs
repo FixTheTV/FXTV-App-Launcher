@@ -13,8 +13,10 @@ namespace FXTVGame.Launcher.Services
         private const int REG_REQ_HEADER_LENGTH = 8;
         private const int HEADER_LENGTH = 6;
         private const int C2S_LOGOUT = 1003;
+        private const int C2S_LEAVELOBBY = 1104;
         private const int C2S_JOIN_LOBBY = 1101;
         private const int C2S_LOBBY_CHAT = 1102;
+        private const int C2S_LOBBY_READY = 1103;
 
         public byte[] CreatePacketHeader(int totalPackgetlength, int opCode)
         {
@@ -88,6 +90,16 @@ namespace FXTVGame.Launcher.Services
             return logoutPacket;
         }
 
+        public byte[] CreateLeaveLobbyPacket()
+        {
+            int totalLength = HEADER_LENGTH;
+            byte[] leaveLobbyPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, C2S_LEAVELOBBY), leaveLobbyPacket, HEADER_LENGTH);
+
+            return leaveLobbyPacket;
+        }
+
         public byte[] CreateJoinLobbyRequestPacket(int lobbyId)
         {
             int totalLength = HEADER_LENGTH + 4;
@@ -113,6 +125,17 @@ namespace FXTVGame.Launcher.Services
             Array.Copy(Encoding.UTF8.GetBytes(message), 0, chatPacket, currentOffset, messageLength);
 
             return chatPacket;
+        }
+
+        public byte[] CreateLobbyReadyPacket(bool isReady)
+        {
+            int totalLength = HEADER_LENGTH + 1;
+            byte[] readyPacket = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, C2S_LOBBY_READY), readyPacket, HEADER_LENGTH);
+            readyPacket[HEADER_LENGTH] = isReady ? (byte)1 : (byte)0;
+
+            return readyPacket;
         }
     }
 }

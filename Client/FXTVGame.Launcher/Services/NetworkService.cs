@@ -9,6 +9,12 @@ namespace FXTVGame.Launcher.Services
 {
     internal class NetworkService
     {
+        private const int S2C_JOIN_LOBBY_RESULT = 2101;
+        private const int S2C_LOBBY_CHAT = 2102;
+        private const int S2C_UPDATE_LOBBY_COUNT = 2103;
+        private const int S2C_LEAVE_LOBBY = 2104;
+        private const int S2C_LOBBY_TAB_UPDATE = 2105;
+
         public static NetworkService Shared { get; } = new NetworkService();
 
         private readonly PacketService packetService = new PacketService();
@@ -18,12 +24,27 @@ namespace FXTVGame.Launcher.Services
         public event Action<LobbyChatMessage>? LobbyChatReceived;
         public event Action<int>? UpdateLobbyCount;
 
+        public event Action<LobbyTab>? UpdateLobbyTab;
+
         private NetworkService()
         {
             tcpClient = new TcpClient();
         }
 
         public bool IsConnected => tcpClient.Connected;
+
+        public static string GetLocalIPv4Address()
+        {
+            foreach (IPAddress address in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+            {
+                if (address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(address))
+                {
+                    return address.ToString();
+                }
+            }
+
+            return "127.0.0.1";
+        }
 
         public async Task ConnectAsync(string ip, int port)
         {
@@ -49,6 +70,13 @@ namespace FXTVGame.Launcher.Services
         {
             var stream = tcpClient.GetStream();
             byte[] packet = packetService.CreateLoginRequestPacket(username, password);
+            await stream.WriteAsync(packet, 0, packet.Length);
+        }
+
+        public async Task SendLeaveLobbyPacket()
+        {
+            var stream = tcpClient.GetStream();
+            byte[] packet = packetService.CreateLeaveLobbyPacket();
             await stream.WriteAsync(packet, 0, packet.Length);
         }
 
@@ -80,6 +108,13 @@ namespace FXTVGame.Launcher.Services
             await stream.WriteAsync(packet, 0, packet.Length);
         }
 
+        public async Task SendLobbyReadyPacket(bool isReady)
+        {
+            var stream = tcpClient.GetStream();
+            byte[] packet = packetService.CreateLobbyReadyPacket(isReady);
+            await stream.WriteAsync(packet, 0, packet.Length);
+        }
+
         public async Task<AuthResult> RecieveLoginResultPacket()
         {
             PacketData packet = await ReadPacketAsync();
@@ -92,16 +127,20 @@ namespace FXTVGame.Launcher.Services
             return HandleRegisterResult(packet.Payload);
         }
 
-        public async Task<bool> ReceiveLogoutResultPacket()
-        {
-            PacketData packet = await ReadPacketAsync();
-            return packet.Payload.Length > 0 && packet.Payload[0] == 1;
-        }
 
         public async Task<JoinLobbyResult> ReceiveJoinLobbyResultPacket()
         {
-            PacketData packet = await ReadPacketAsync();
-            return HandleJoinLobbyResult(packet.Payload);
+            while (true)
+            {
+                PacketData packet = await ReadPacketAsync();
+
+                if (packet.OpCode == S2C_JOIN_LOBBY_RESULT)
+                {
+                    return HandleJoinLobbyResult(packet.Payload);
+                }
+
+                HandleLobbyPacket(packet);
+            }
         }
 
         public void StartLobbyChatReceiveLoop()
@@ -128,13 +167,9 @@ namespace FXTVGame.Launcher.Services
                 {
                     PacketData packet = await ReadPacketAsync();
 
-                    if (packet.OpCode == 2102)
+                    if (!HandleLobbyPacket(packet))
                     {
-                        LobbyChatReceived?.Invoke(HandleLobbyChatMessage(packet.Payload));
-                    }
-                    if (packet.OpCode == 2103)
-                    {
-                        UpdateLobbyCount?.Invoke(HandleUpdateLobbyCount(packet.Payload));
+                        break;
                     }
                 }
             }
@@ -142,6 +177,47 @@ namespace FXTVGame.Launcher.Services
             {
                 isReceivingLobbyChat = false;
             }
+        }
+
+        private bool HandleLobbyPacket(PacketData packet)
+        {
+            switch (packet.OpCode)
+            {
+                case S2C_LOBBY_CHAT:
+                    LobbyChatReceived?.Invoke(HandleLobbyChatMessage(packet.Payload));
+                    return true;
+
+                case S2C_UPDATE_LOBBY_COUNT:
+                    UpdateLobbyCount?.Invoke(HandleUpdateLobbyCount(packet.Payload));
+                    return true;
+
+                case S2C_LOBBY_TAB_UPDATE:
+                    UpdateLobbyTab?.Invoke(HandleUpdateLobbyTab(packet.Payload));
+                    return true;
+
+                case S2C_LEAVE_LOBBY:
+                    isReceivingLobbyChat = false;
+                    return false;
+
+                default:
+                    return true;
+            }
+        }
+
+        private LobbyTab HandleUpdateLobbyTab(byte[] payloadBuffer)
+        {
+            int currentOffset = 0;
+
+            ushort usernameLength = BitConverter.ToUInt16(payloadBuffer, currentOffset);
+            currentOffset += 2;
+            string username = Encoding.UTF8.GetString(payloadBuffer, currentOffset, usernameLength);
+            currentOffset += usernameLength;
+
+            int slot = payloadBuffer[currentOffset];
+            currentOffset++;
+            bool isReady = payloadBuffer.Length > currentOffset && payloadBuffer[currentOffset] == 1;
+
+            return new LobbyTab { name = username, slot = slot, isReady = isReady };
         }
 
         private int HandleUpdateLobbyCount(byte[] payloadBuffer)
@@ -258,7 +334,7 @@ namespace FXTVGame.Launcher.Services
             }
 
             await SendLogoutPacket();
-            await ReceiveLogoutResultPacket();
+            await DisconnectAsync();
         }
 
         public Task DisconnectAsync()
@@ -281,5 +357,7 @@ namespace FXTVGame.Launcher.Services
             public int OpCode { get; set; }
             public byte[] Payload { get; set; } = Array.Empty<byte>();
         }
+
+
     }
 }

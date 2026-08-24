@@ -12,6 +12,7 @@ namespace FXTVGame.Backend.Network
         public long UserId { get; set; }
         public string Username { get; set; } = string.Empty;
         public int? LobbyId { get; set; }
+        public bool IsReady { get; set; }
 
         public ClientPeer(TcpClient socket)
         {
