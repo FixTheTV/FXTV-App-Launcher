@@ -9,6 +9,9 @@ namespace FXTVGame.Launcher.Services
 {
     internal class NetworkService
     {
+        private const int S2C_LOGIN_RESULT = 2001;
+        private const int S2C_REGISTER_RESULT = 2002;
+        private const int S2C_LOGOUT_RESULT = 2003;
         private const int S2C_JOIN_LOBBY_RESULT = 2101;
         private const int S2C_LOBBY_CHAT = 2102;
         private const int S2C_UPDATE_LOBBY_COUNT = 2103;
@@ -18,8 +21,13 @@ namespace FXTVGame.Launcher.Services
         public static NetworkService Shared { get; } = new NetworkService();
 
         private readonly PacketService packetService = new PacketService();
+        private readonly object packetSyncRoot = new object();
+        private readonly Dictionary<int, Queue<PacketData>> waitingPackets = new Dictionary<int, Queue<PacketData>>();
+        private readonly Dictionary<int, Queue<TaskCompletionSource<PacketData>>> packetWaiters = new Dictionary<int, Queue<TaskCompletionSource<PacketData>>>();
+        private readonly Queue<PacketData> pendingLobbyPackets = new Queue<PacketData>();
         private TcpClient tcpClient;
         private bool isReceivingLobbyChat;
+        private Task? receiveLoopTask;
 
         public event Action<LobbyChatMessage>? LobbyChatReceived;
         public event Action<int>? UpdateLobbyCount;
@@ -64,6 +72,7 @@ namespace FXTVGame.Launcher.Services
 
             
             await tcpClient.ConnectAsync(convertedIP, port);
+            StartReceiveLoop();
         }
 
         public async Task SendLoginPacket(string username, string password)
@@ -117,30 +126,21 @@ namespace FXTVGame.Launcher.Services
 
         public async Task<AuthResult> RecieveLoginResultPacket()
         {
-            PacketData packet = await ReadPacketAsync();
+            PacketData packet = await WaitForPacketAsync(S2C_LOGIN_RESULT);
             return HandleLoginResult(packet.Payload);
         }
 
         public async Task<RegisterResult> RecieveRegisterResultPacket()
         {
-            PacketData packet = await ReadPacketAsync();
+            PacketData packet = await WaitForPacketAsync(S2C_REGISTER_RESULT);
             return HandleRegisterResult(packet.Payload);
         }
 
 
         public async Task<JoinLobbyResult> ReceiveJoinLobbyResultPacket()
         {
-            while (true)
-            {
-                PacketData packet = await ReadPacketAsync();
-
-                if (packet.OpCode == S2C_JOIN_LOBBY_RESULT)
-                {
-                    return HandleJoinLobbyResult(packet.Payload);
-                }
-
-                HandleLobbyPacket(packet);
-            }
+            PacketData packet = await WaitForPacketAsync(S2C_JOIN_LOBBY_RESULT);
+            return HandleJoinLobbyResult(packet.Payload);
         }
 
         public void StartLobbyChatReceiveLoop()
@@ -151,32 +151,162 @@ namespace FXTVGame.Launcher.Services
             }
 
             isReceivingLobbyChat = true;
-            _ = Task.Run(ReceiveLobbyChatLoopAsync);
+            FlushPendingLobbyPackets();
         }
 
         public void StopLobbyChatReceiveLoop()
         {
             isReceivingLobbyChat = false;
+
+            lock (packetSyncRoot)
+            {
+                pendingLobbyPackets.Clear();
+            }
         }
 
-        private async Task ReceiveLobbyChatLoopAsync()
+        private void StartReceiveLoop()
+        {
+            if (receiveLoopTask != null && !receiveLoopTask.IsCompleted)
+            {
+                return;
+            }
+
+            receiveLoopTask = Task.Run(ReceiveLoopAsync);
+        }
+
+        private async Task ReceiveLoopAsync()
         {
             try
             {
-                while (IsConnected && isReceivingLobbyChat)
+                while (IsConnected)
                 {
                     PacketData packet = await ReadPacketAsync();
-
-                    if (!HandleLobbyPacket(packet))
-                    {
-                        break;
-                    }
+                    RoutePacket(packet);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                isReceivingLobbyChat = false;
+                FailWaitingPackets(ex);
             }
+        }
+
+        private Task<PacketData> WaitForPacketAsync(int opCode)
+        {
+            lock (packetSyncRoot)
+            {
+                if (waitingPackets.TryGetValue(opCode, out Queue<PacketData>? packets) && packets.Count > 0)
+                {
+                    return Task.FromResult(packets.Dequeue());
+                }
+
+                var waiter = new TaskCompletionSource<PacketData>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                if (!packetWaiters.TryGetValue(opCode, out Queue<TaskCompletionSource<PacketData>>? waiters))
+                {
+                    waiters = new Queue<TaskCompletionSource<PacketData>>();
+                    packetWaiters[opCode] = waiters;
+                }
+
+                waiters.Enqueue(waiter);
+                return waiter.Task;
+            }
+        }
+
+        private void RoutePacket(PacketData packet)
+        {
+            TaskCompletionSource<PacketData>? waiter = null;
+
+            lock (packetSyncRoot)
+            {
+                if (packetWaiters.TryGetValue(packet.OpCode, out Queue<TaskCompletionSource<PacketData>>? waiters) && waiters.Count > 0)
+                {
+                    waiter = waiters.Dequeue();
+                }
+                else if (IsResponsePacket(packet.OpCode))
+                {
+                    if (!waitingPackets.TryGetValue(packet.OpCode, out Queue<PacketData>? packets))
+                    {
+                        packets = new Queue<PacketData>();
+                        waitingPackets[packet.OpCode] = packets;
+                    }
+
+                    packets.Enqueue(packet);
+                    return;
+                }
+                else if (IsLobbyPacket(packet.OpCode) && !isReceivingLobbyChat)
+                {
+                    pendingLobbyPackets.Enqueue(packet);
+                    return;
+                }
+            }
+
+            if (waiter != null)
+            {
+                waiter.SetResult(packet);
+                return;
+            }
+
+            if (IsLobbyPacket(packet.OpCode))
+            {
+                HandleLobbyPacket(packet);
+            }
+        }
+
+        private void FlushPendingLobbyPackets()
+        {
+            while (true)
+            {
+                PacketData packet;
+
+                lock (packetSyncRoot)
+                {
+                    if (pendingLobbyPackets.Count == 0 || !isReceivingLobbyChat)
+                    {
+                        return;
+                    }
+
+                    packet = pendingLobbyPackets.Dequeue();
+                }
+
+                if (!HandleLobbyPacket(packet))
+                {
+                    return;
+                }
+            }
+        }
+
+        private void FailWaitingPackets(Exception ex)
+        {
+            List<TaskCompletionSource<PacketData>> waitersToFail = new List<TaskCompletionSource<PacketData>>();
+
+            lock (packetSyncRoot)
+            {
+                foreach (Queue<TaskCompletionSource<PacketData>> waiters in packetWaiters.Values)
+                {
+                    while (waiters.Count > 0)
+                    {
+                        waitersToFail.Add(waiters.Dequeue());
+                    }
+                }
+
+                waitingPackets.Clear();
+                pendingLobbyPackets.Clear();
+            }
+
+            foreach (TaskCompletionSource<PacketData> waiter in waitersToFail)
+            {
+                waiter.TrySetException(ex);
+            }
+        }
+
+        private bool IsResponsePacket(int opCode)
+        {
+            return opCode == S2C_LOGIN_RESULT || opCode == S2C_REGISTER_RESULT || opCode == S2C_LOGOUT_RESULT || opCode == S2C_JOIN_LOBBY_RESULT;
+        }
+
+        private bool IsLobbyPacket(int opCode)
+        {
+            return opCode == S2C_LOBBY_CHAT || opCode == S2C_UPDATE_LOBBY_COUNT || opCode == S2C_LEAVE_LOBBY || opCode == S2C_LOBBY_TAB_UPDATE;
         }
 
         private bool HandleLobbyPacket(PacketData packet)
@@ -334,6 +464,7 @@ namespace FXTVGame.Launcher.Services
             }
 
             await SendLogoutPacket();
+            await WaitForPacketAsync(S2C_LOGOUT_RESULT);
             await DisconnectAsync();
         }
 
@@ -348,6 +479,8 @@ namespace FXTVGame.Launcher.Services
 
             tcpClient.Dispose();
             tcpClient = new TcpClient();
+            receiveLoopTask = null;
+            FailWaitingPackets(new InvalidOperationException("Network connection closed."));
 
             return Task.CompletedTask;
         }

@@ -79,3 +79,51 @@ No payload.
 - `byte[] username`
 - `uint16 messageLength`
 - `byte[] message`
+
+### `1103` C2S_LobbyReady
+
+- `byte isReady`
+
+Ready state values:
+
+- `0`: not ready
+- `1`: ready
+
+The client sends this when the player clicks the Ready/Unready button.
+
+### `2103` S2C_UpdateLobbyCount
+
+- `int32 playerCount`
+
+The server broadcasts this when the lobby player count changes.
+
+### `1104` C2S_LeaveLobby
+
+No payload.
+
+The client sends this when the player leaves the current lobby.
+
+### `2104` S2C_LeaveLobby
+
+No payload.
+
+The server sends this back to the leaving client after processing the leave request.
+
+### `2105` S2C_LobbyTabUpdate
+
+- `uint16 usernameLength`
+- `byte[] username`
+- `byte slot`
+- `byte isReady`
+
+Slot values:
+
+- `0`: first player slot
+- `1`: second player slot
+
+Ready state values:
+
+- `0`: not ready
+- `1`: ready
+
+If `usernameLength` is `0`, that slot is empty.
