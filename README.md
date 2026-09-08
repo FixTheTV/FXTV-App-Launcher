@@ -25,21 +25,6 @@ FXTV Launcher is a personal game launcher project focused on learning and experi
 
 FXTV Launcher uses a client-server architecture.
 
-Client
-  │
-  │ Custom Protocol
-  ▼
-Server
-  │
-  ├── Authentication
-  ├── Lobby Management
-  ├── Connection Management
-  ├── Heartbeat
-  ├── Logging / Telemetry
-  │
-  ▼
-MySQL Database
-
 The client communicates with the server through a custom networking layer.
 
 The server is responsible for authentication, connection management, lobby management, and shared application state.
@@ -47,22 +32,6 @@ The server is responsible for authentication, connection management, lobby manag
 ## Connection Management
 
 FXTV Launcher uses heartbeat messages to monitor active connections.
-
-Client                         Server
-  │                              │
-  │────────── PING ─────────────>│
-  │<───────── PONG ──────────────│
-  │                              │
-  │────────── PING ─────────────>│
-  │<───────── PONG ──────────────│
-  │                              │
-  X Connection lost              │
-                                 │
-                         Heartbeat timeout
-                                 │
-                         Mark client offline
-                                 │
-                         Clean up resources
 
 Graceful disconnection is handled separately from unexpected connection loss.
 
