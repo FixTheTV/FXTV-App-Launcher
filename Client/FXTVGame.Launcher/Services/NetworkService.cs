@@ -18,9 +18,16 @@ namespace FXTVGame.Launcher.Services
         private const int S2C_LEAVE_LOBBY = 2104;
         private const int S2C_LOBBY_TAB_UPDATE = 2105;
 
+        private const int S2C_Ping = 2000;
+
         public static NetworkService Shared { get; } = new NetworkService();
 
         private readonly PacketService packetService = new PacketService();
+        private class PacketData
+        {
+            public int OpCode { get; set; }
+            public byte[] Payload { get; set; } = Array.Empty<byte>();
+        }
         private readonly object packetSyncRoot = new object();
         private readonly Dictionary<int, Queue<PacketData>> waitingPackets = new Dictionary<int, Queue<PacketData>>();
         private readonly Dictionary<int, Queue<TaskCompletionSource<PacketData>>> packetWaiters = new Dictionary<int, Queue<TaskCompletionSource<PacketData>>>();
@@ -30,7 +37,7 @@ namespace FXTVGame.Launcher.Services
         private Task? receiveLoopTask;
 
         public event Action<LobbyChatMessage>? LobbyChatReceived;
-        public event Action<int>? UpdateLobbyCount;
+        public event Action<int>? UpdateLobbyCount; 
 
         public event Action<LobbyTab>? UpdateLobbyTab;
 
@@ -142,7 +149,12 @@ namespace FXTVGame.Launcher.Services
             PacketData packet = await WaitForPacketAsync(S2C_JOIN_LOBBY_RESULT);
             return HandleJoinLobbyResult(packet.Payload);
         }
-
+        private async Task SendPongPacket()
+        {
+            var stream = tcpClient.GetStream();
+            byte[] packet = packetService.CreatePongPacket();
+            await stream.WriteAsync(packet, 0, packet.Length); 
+        }
         public void StartLobbyChatReceiveLoop()
         {
             if (isReceivingLobbyChat)
@@ -215,6 +227,7 @@ namespace FXTVGame.Launcher.Services
         private void RoutePacket(PacketData packet)
         {
             TaskCompletionSource<PacketData>? waiter = null;
+            bool isPingPacket = false ;
 
             lock (packetSyncRoot)
             {
@@ -229,7 +242,7 @@ namespace FXTVGame.Launcher.Services
                         packets = new Queue<PacketData>();
                         waitingPackets[packet.OpCode] = packets;
                     }
-
+                        
                     packets.Enqueue(packet);
                     return;
                 }
@@ -238,6 +251,14 @@ namespace FXTVGame.Launcher.Services
                     pendingLobbyPackets.Enqueue(packet);
                     return;
                 }
+                else if (IsPingPacket(packet.OpCode))
+                {
+                    isPingPacket = true;
+                }
+            }
+            if (isPingPacket)
+            {
+                _ = SendPongPacket();
             }
 
             if (waiter != null)
@@ -251,6 +272,8 @@ namespace FXTVGame.Launcher.Services
                 HandleLobbyPacket(packet);
             }
         }
+
+
 
         private void FlushPendingLobbyPackets()
         {
@@ -307,6 +330,11 @@ namespace FXTVGame.Launcher.Services
         private bool IsLobbyPacket(int opCode)
         {
             return opCode == S2C_LOBBY_CHAT || opCode == S2C_UPDATE_LOBBY_COUNT || opCode == S2C_LEAVE_LOBBY || opCode == S2C_LOBBY_TAB_UPDATE;
+        }
+        
+        private bool IsPingPacket(int opCode)
+        {
+            return opCode == S2C_Ping;
         }
 
         private bool HandleLobbyPacket(PacketData packet)
@@ -485,11 +513,6 @@ namespace FXTVGame.Launcher.Services
             return Task.CompletedTask;
         }
 
-        private class PacketData
-        {
-            public int OpCode { get; set; }
-            public byte[] Payload { get; set; } = Array.Empty<byte>();
-        }
 
 
     }

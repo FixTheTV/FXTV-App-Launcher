@@ -3,10 +3,10 @@ using FXTVGame.Backend.Services;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.ExceptionServices;
 using System.Text;
 
-ConcurrentDictionary<long, ClientPeer> peers = new ConcurrentDictionary<long, ClientPeer>();
-ConcurrentDictionary<int, Lobby> lobbies = new ConcurrentDictionary<int, Lobby>();
+var serverData = new ServerData();
 
 TcpListener tcpListener = new TcpListener(IPAddress.Any, 12345);
 tcpListener.Start();
@@ -14,7 +14,11 @@ tcpListener.Start();
 PacketService packetService = new PacketService();
 DatabaseService databaseService = new DatabaseService();
 
+HeartBeat heartBeat = new HeartBeat(packetService);
+heartBeat.StartHeartBeatLoop(serverData.peers);
+
 Console.WriteLine("Server Started on Port 12345...");
+
 
 while (true)
 {
@@ -105,7 +109,10 @@ async Task HandleClientAsync(ClientPeer peer)
                             
                         }
                         break;
-
+                    case Opcodes.C2S_Pong:
+                        peer.IsAlive = true;
+                        Console.WriteLine($"Received Pong from :User ID {peer.UserId}");
+                        break;
                     default:
                         Console.WriteLine($"[Warning] Unknown Opcode: {opCode}");
                         break;
@@ -118,7 +125,7 @@ async Task HandleClientAsync(ClientPeer peer)
         }
 
         await RemovePeerFromLobby(peer);
-        peers.TryRemove(peer.UserId, out _);
+        serverData.peers.TryRemove(peer.UserId, out _);
 
         string clientPort = peer.Socket.Client.RemoteEndPoint is IPEndPoint remoteEndPoint
             ? remoteEndPoint.Port.ToString()
@@ -156,7 +163,7 @@ async Task HandleLoginAsync(ClientPeer peer, byte[] payloadBuffer, NetworkStream
         peer.State = ClientState.Authenticated; 
         
         packet = packetService.CreateLoginResultPacket(true, username, peer.UserId);
-        peers.TryAdd(peer.UserId, peer);
+        serverData.peers.TryAdd(peer.UserId, peer);
         Console.WriteLine($"Login Succeed! Generated Token for User {peer.UserId}");
     }
 
@@ -192,7 +199,7 @@ async Task HandleRegisterAsync(ClientPeer peer, byte[] payloadBuffer, NetworkStr
 async Task HandleLogoutAsync(ClientPeer peer, NetworkStream network)
 {
     await RemovePeerFromLobby(peer);
-    peers.TryRemove(peer.UserId, out _);
+    serverData.peers.TryRemove(peer.UserId, out _);
 
     peer.UserId = 0;
     peer.Username = string.Empty;
@@ -208,7 +215,7 @@ async Task HandleJoinLobbyAsync(ClientPeer peer, byte[] payloadBuffer, NetworkSt
 
     await RemovePeerFromLobby(peer);
 
-    Lobby lobby = lobbies.GetOrAdd(lobbyId, id => new Lobby(id));
+    Lobby lobby = serverData.lobbies.GetOrAdd(lobbyId, id => new Lobby(id));
 
     byte[] packet;
     bool joinedLobby;
@@ -312,7 +319,7 @@ async Task HandleLobbyReadyAsync(ClientPeer peer, byte[] payloadBuffer)
 
     peer.IsReady = payloadBuffer[0] == 1;
 
-    if (lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
+    if (serverData.lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
     {
         await BroadcastLobbyTabsAsync(lobby);
     }
@@ -362,7 +369,7 @@ async Task HandleLobbyChatAsync(ClientPeer peer, byte[] payloadBuffer)
     currentOffset += 2;
     string message = Encoding.UTF8.GetString(payloadBuffer, currentOffset, messageLength);
 
-    if (!lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
+    if (!serverData.lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
     {
         return;
     }
@@ -408,14 +415,14 @@ async Task RemovePeerFromLobby(ClientPeer peer)
     Lobby? lobbyToUpdate = null;
     int playerCount = 0;
 
-    if (lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
+    if (serverData.lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
     {
         RemovePeerFromLobbyState(lobby, peer.UserId);
         playerCount = lobby.Peers.Count;
 
         if (lobby.Peers.IsEmpty)
         {
-            lobbies.TryRemove(lobby.Id, out _);
+            serverData.lobbies.TryRemove(lobby.Id, out _);
         }
         else
         {

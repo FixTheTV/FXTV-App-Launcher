@@ -17,7 +17,7 @@ namespace FXTVGame.Backend.Services
         {
             using (var connection = new MySqlConnection(connectionString))
             {
-                    connection.Open();
+                try { connection.Open();
 
                     using (var createTableCmd = connection.CreateCommand())
                     {
@@ -31,6 +31,13 @@ namespace FXTVGame.Backend.Services
 
                         createTableCmd.ExecuteNonQuery();
                     }
+                }
+
+                catch
+                {
+                    Console.WriteLine($"Can not connect to database" );
+                } 
+
               
 
 

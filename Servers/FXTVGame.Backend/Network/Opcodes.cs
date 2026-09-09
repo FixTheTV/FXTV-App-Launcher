@@ -28,5 +28,7 @@ namespace FXTVGame.Backend.Network
         public const ushort C2S_LobbyReady = 1103;
 
         public const ushort S2C_UpdateLobbyCount = 2103;
+        public const ushort S2C_Ping = 2000;
+        public const ushort C2S_Pong = 1000;
     }
 }

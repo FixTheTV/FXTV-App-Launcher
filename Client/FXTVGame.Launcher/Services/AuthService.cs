@@ -20,7 +20,7 @@ namespace FXTVGame.Launcher.Services.Auth
         {
             username = username.Trim();
 
-            await SendLoginAsync(username,password);          
+            await SendLoginAsync(username,password).ConfigureAwait(false);          
         }
 
         public async Task ConnectBoisss()
@@ -31,7 +31,7 @@ namespace FXTVGame.Launcher.Services.Auth
 
             // If the backend server is running on another PC, comment the auto line above
             // and uncomment this manual LAN IP line instead.
-            // string serverIpAddress = "192.168.1.142";
+            //string serverIpAddress = "192.168.2.142";
 
             await networkService.ConnectAsync(serverIpAddress, 12345);   
         }

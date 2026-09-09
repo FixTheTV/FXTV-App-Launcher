@@ -251,5 +251,13 @@ namespace FXTVGame.Backend.Services
             return packet;
 
         }
+        public byte[] CreatePingPacket()
+        {
+            byte[] packet = new byte[HEADER_LENGTH];
+
+            Array.Copy(CreatePacketHeader(HEADER_LENGTH, Opcodes.S2C_Ping), packet, HEADER_LENGTH);
+
+            return packet;
+        }
     }
 }

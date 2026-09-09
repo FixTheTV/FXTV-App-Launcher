@@ -18,6 +18,16 @@ namespace FXTVGame.Launcher.Services
         private const int C2S_LOBBY_CHAT = 1102;
         private const int C2S_LOBBY_READY = 1103;
 
+        private const int C2S_Pong = 1000;
+
+        public byte[] CreatePongPacket()
+        {
+            byte[] packet = new byte[6];
+
+            Array.Copy(CreatePacketHeader(6, C2S_Pong), packet, 6);
+
+            return packet;
+        }
         public byte[] CreatePacketHeader(int totalPackgetlength, int opCode)
         {
             byte[] packetHeader = new byte[6];
