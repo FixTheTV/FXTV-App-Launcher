@@ -15,14 +15,13 @@ namespace FXTVGame.Backend.Network
     }
     public class ClientPeer
     {
+        public DateTime LastHeartbeat { get; set; } = DateTime.UtcNow;
         public TcpClient Socket { get; private set; }
         public ClientState State { get; set; } = ClientState.Connected;
         public long UserId { get; set; }
         public string Username { get; set; } = string.Empty;
         public int? LobbyId { get; set; }
         public bool IsReady { get; set; }
-
-        public bool IsAlive { get; set; } = true;
 
         public ClientPeer(TcpClient socket)
         {

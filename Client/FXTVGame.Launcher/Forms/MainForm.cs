@@ -7,11 +7,32 @@ namespace FXTVGame.Launcher.Forms
     public partial class MainForm : Form
     {
         private readonly LauncherPreferenceService preferenceService = new LauncherPreferenceService();
+        private readonly NetworkService networkService = NetworkService.Shared;
+        private readonly GameService gameService = new GameService();
         private string? CurrentUserSession;
         public  MainForm()
         {
             InitializeComponent();
+            networkService.LaunchGameRequested += LaunchGame;
             ShowMain();
+        }
+
+        private void LaunchGame(int gameId, string sessionToken)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(() => LaunchGame(gameId, sessionToken));
+                return;
+            }
+
+            try
+            {
+                gameService.StartGame(gameId, sessionToken, networkService.ConnectedServerIp);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to launch game: {ex.Message}");
+            }
         }
 
         private void ShowLogin()

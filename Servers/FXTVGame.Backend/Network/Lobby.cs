@@ -7,6 +7,7 @@ namespace FXTVGame.Backend.Network
         public int Id { get; }
         public ConcurrentDictionary<long, ClientPeer> Peers { get; } = new ConcurrentDictionary<long, ClientPeer>();
         public ClientPeer?[] PeerSlots { get; } = new ClientPeer?[2];
+        public bool HasGameStarted { get; set; }
         public object SyncRoot { get; } = new object();
 
         public Lobby(int id)

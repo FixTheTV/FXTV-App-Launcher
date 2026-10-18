@@ -110,7 +110,7 @@ async Task HandleClientAsync(ClientPeer peer)
                         }
                         break;
                     case Opcodes.C2S_Pong:
-                        peer.IsAlive = true;
+                        peer.LastHeartbeat = DateTime.UtcNow;
                         Console.WriteLine($"Received Pong from :User ID {peer.UserId}");
                         break;
                     default:
@@ -312,6 +312,7 @@ async Task BroadcastUpdateLobbyTab(Lobby lobby, string name, byte slot, bool isR
 
 async Task HandleLobbyReadyAsync(ClientPeer peer, byte[] payloadBuffer)
 {
+
     if (peer.LobbyId == null || payloadBuffer.Length < 1)
     {
         return;
@@ -322,6 +323,65 @@ async Task HandleLobbyReadyAsync(ClientPeer peer, byte[] payloadBuffer)
     if (serverData.lobbies.TryGetValue(peer.LobbyId.Value, out Lobby? lobby))
     {
         await BroadcastLobbyTabsAsync(lobby);
+        await CheckAllReadyAndStartGame(lobby);
+    }
+}
+
+async Task CheckAllReadyAndStartGame(Lobby lobby)
+{
+    List<ClientPeer> playersToStart = new List<ClientPeer>();
+
+    lock (lobby.SyncRoot)
+    {
+        if (lobby.HasGameStarted)
+        {
+            return;
+        }
+
+        if (lobby.Peers.Count < lobby.PeerSlots.Length)
+        {
+            return;
+        }
+
+        foreach (ClientPeer? slotPeer in lobby.PeerSlots)
+        {
+            if (slotPeer == null || !slotPeer.IsReady)
+            {
+                return;
+            }
+
+            playersToStart.Add(slotPeer);
+        }
+
+        lobby.HasGameStarted = true;
+
+        foreach (ClientPeer player in playersToStart)
+        {
+            player.State = ClientState.InGame;
+        }
+    }
+
+    await BroadcastLaunchGameAsync(playersToStart, 1, "123");
+}
+
+async Task BroadcastLaunchGameAsync(List<ClientPeer> playersToStart, int gameId, string sessionToken)
+{
+    byte[] packet = packetService.CreateLaunchGamePacket(gameId, sessionToken);
+
+    foreach (ClientPeer targetPeer in playersToStart)
+    {
+        try
+        {
+            NetworkStream stream = targetPeer.Socket.GetStream();
+            await stream.WriteAsync(packet, 0, packet.Length);
+        }
+        catch
+        {
+            if (targetPeer.LobbyId != null && serverData.lobbies.TryGetValue(targetPeer.LobbyId.Value, out Lobby? lobby))
+            {
+                RemovePeerFromLobbyState(lobby, targetPeer.UserId);
+            }
+        }
     }
 }
 

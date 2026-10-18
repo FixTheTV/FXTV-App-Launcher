@@ -19,6 +19,7 @@ namespace FXTVGame.Launcher.Services
         private const int S2C_LOBBY_TAB_UPDATE = 2105;
 
         private const int S2C_Ping = 2000;
+        private const int S2C_LAUNCH_GAME = 2201;
 
         public static NetworkService Shared { get; } = new NetworkService();
 
@@ -40,6 +41,8 @@ namespace FXTVGame.Launcher.Services
         public event Action<int>? UpdateLobbyCount; 
 
         public event Action<LobbyTab>? UpdateLobbyTab;
+        public event Action<int, string>? LaunchGameRequested;
+        public string ConnectedServerIp { get; private set; } = "127.0.0.1";
 
         private NetworkService()
         {
@@ -79,6 +82,7 @@ namespace FXTVGame.Launcher.Services
 
             
             await tcpClient.ConnectAsync(convertedIP, port);
+            ConnectedServerIp = convertedIP.ToString();
             StartReceiveLoop();
         }
 
@@ -271,6 +275,11 @@ namespace FXTVGame.Launcher.Services
             {
                 HandleLobbyPacket(packet);
             }
+
+            if (IsGamePacket(packet.OpCode))
+            {
+                HandleGamePacket(packet);
+            }
         }
 
 
@@ -335,6 +344,37 @@ namespace FXTVGame.Launcher.Services
         private bool IsPingPacket(int opCode)
         {
             return opCode == S2C_Ping;
+        }
+
+        private bool IsGamePacket(int opCode)
+        {
+            return opCode == S2C_LAUNCH_GAME;
+        }
+
+        private void HandleGamePacket(PacketData packet)
+        {
+            switch (packet.OpCode)
+            {
+                case S2C_LAUNCH_GAME:
+                    (int gameId, string sessionToken) = HandleLaunchGame(packet.Payload);
+                    LaunchGameRequested?.Invoke(gameId, sessionToken);
+                    break;
+            }
+        }
+
+        private (int GameId, string SessionToken) HandleLaunchGame(byte[] payloadBuffer)
+        {
+            int currentOffset = 0;
+
+            int gameId = BitConverter.ToInt32(payloadBuffer, currentOffset);
+            currentOffset += 4;
+
+            ushort tokenLength = BitConverter.ToUInt16(payloadBuffer, currentOffset);
+            currentOffset += 2;
+
+            string sessionToken = Encoding.UTF8.GetString(payloadBuffer, currentOffset, tokenLength);
+
+            return (gameId, sessionToken);
         }
 
         private bool HandleLobbyPacket(PacketData packet)

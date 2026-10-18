@@ -127,3 +127,20 @@ Ready state values:
 - `1`: ready
 
 If `usernameLength` is `0`, that slot is empty.
+
+## Game Launch
+
+### `2201` S2C_LaunchGame
+
+- `int32 gameId`
+- `uint16 sessionTokenLength`
+- `byte[] sessionToken`
+
+The server sends this when a lobby is full, every player is ready, and the game has not started yet.
+
+Current dev behavior:
+
+- `gameId = 1`
+- `sessionToken = "123"`
+
+The launcher should start the game executable and pass the session token to the game process.

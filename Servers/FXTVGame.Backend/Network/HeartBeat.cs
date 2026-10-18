@@ -32,13 +32,11 @@ namespace FXTVGame.Backend.Network
                          long peerID = kvp.Key;
                          ClientPeer clientPeer = kvp.Value;
 
-                         if (!clientPeer.IsAlive)
+                         if (DateTime.UtcNow - clientPeer.LastHeartbeat > TimeSpan.FromSeconds(10))
                          {
                              HandleDisconnection(peerID,peers,clientPeer);
                              continue;
                          }
-
-                         clientPeer.IsAlive = false;
 
                          _ = SendPingAsync(clientPeer);
                      }
@@ -69,6 +67,11 @@ namespace FXTVGame.Backend.Network
             {
 
             }
+        }
+
+        public void Stop()
+        {
+            cts.Cancel();
         }
     }
 }

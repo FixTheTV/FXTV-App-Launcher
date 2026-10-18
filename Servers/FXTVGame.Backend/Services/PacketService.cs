@@ -259,5 +259,25 @@ namespace FXTVGame.Backend.Services
 
             return packet;
         }
+
+        public byte[] CreateLaunchGamePacket(int gameId, string sessionToken)
+        {
+            int tokenLength = Encoding.UTF8.GetByteCount(sessionToken);
+            int totalLength = HEADER_LENGTH + 4 + 2 + tokenLength;
+            byte[] packet = new byte[totalLength];
+
+            Array.Copy(CreatePacketHeader(totalLength, Opcodes.S2C_LaunchGame), packet, HEADER_LENGTH);
+
+            int currentOffset = HEADER_LENGTH;
+            Array.Copy(BitConverter.GetBytes(gameId), 0, packet, currentOffset, 4);
+            currentOffset += 4;
+
+            Array.Copy(BitConverter.GetBytes((ushort)tokenLength), 0, packet, currentOffset, 2);
+            currentOffset += 2;
+
+            Array.Copy(Encoding.UTF8.GetBytes(sessionToken), 0, packet, currentOffset, tokenLength);
+
+            return packet;
+        }
     }
 }
