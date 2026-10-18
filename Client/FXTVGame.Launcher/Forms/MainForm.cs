@@ -60,7 +60,7 @@ namespace FXTVGame.Launcher.Forms
 
         private void ShowLobby(JoinLobbyResult res)
         {
-            var lobbyControl = new LobbyControl(res);
+            var lobbyControl = new LobbyControl(res, CurrentUserSession ?? string.Empty);
             lobbyControl.BackToHome += ShowHomeFromSession;
             ShowScreen(lobbyControl);
         }

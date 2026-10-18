@@ -8,13 +8,15 @@ namespace FXTVGame.Launcher.Controls
         private readonly NetworkService networkService = NetworkService.Shared;
 
         private int MyLobby;
+        private readonly string myUsername;
         private bool isReady;
 
         public Action? BackToHome;
 
-        public LobbyControl(JoinLobbyResult res)
+        public LobbyControl(JoinLobbyResult res, string username)
         {
             MyLobby = res.LobbyId;
+            myUsername = username;
             InitializeComponent();
 
             networkService.LobbyChatReceived += OnLobbyChatReceived;
@@ -86,6 +88,12 @@ namespace FXTVGame.Launcher.Controls
             }
 
             SetPlayerSlot(lobbyTab.slot, lobbyTab.name, lobbyTab.isReady);
+
+            if (string.Equals(lobbyTab.name, myUsername, StringComparison.Ordinal))
+            {
+                isReady = lobbyTab.isReady;
+                ready_button.Text = isReady ? "UNREADY" : "READY";
+            }
         }
 
         private void SetPlayerSlot(int slot, string name, bool slotIsReady)

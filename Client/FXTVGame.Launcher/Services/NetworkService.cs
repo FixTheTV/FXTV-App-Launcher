@@ -135,6 +135,17 @@ namespace FXTVGame.Launcher.Services
             await stream.WriteAsync(packet, 0, packet.Length);
         }
 
+        public async Task SendGameFinishedPacketAsync(GameResultModel result)
+        {
+            if (!IsConnected)
+            {
+                throw new InvalidOperationException("Cannot report game result: launcher is disconnected from the backend.");
+            }
+
+            byte[] packet = packetService.CreateGameFinishedPacket(result.GameId, result.Result);
+            await tcpClient.GetStream().WriteAsync(packet, 0, packet.Length);
+        }
+
         public async Task<AuthResult> RecieveLoginResultPacket()
         {
             PacketData packet = await WaitForPacketAsync(S2C_LOGIN_RESULT);

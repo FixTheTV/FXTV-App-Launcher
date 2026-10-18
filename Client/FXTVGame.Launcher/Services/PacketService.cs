@@ -17,6 +17,7 @@ namespace FXTVGame.Launcher.Services
         private const int C2S_JOIN_LOBBY = 1101;
         private const int C2S_LOBBY_CHAT = 1102;
         private const int C2S_LOBBY_READY = 1103;
+        private const int C2S_GAME_FINISHED = 1105;
 
         private const int C2S_Pong = 1000;
 
@@ -146,6 +147,24 @@ namespace FXTVGame.Launcher.Services
             readyPacket[HEADER_LENGTH] = isReady ? (byte)1 : (byte)0;
 
             return readyPacket;
+        }
+
+        public byte[] CreateGameFinishedPacket(int gameId, string result)
+        {
+            byte resultCode = result.ToLowerInvariant() switch
+            {
+                "win" => 1,
+                "lose" => 2,
+                "draw" => 3,
+                _ => throw new ArgumentOutOfRangeException(nameof(result), result, "Unknown game result.")
+            };
+
+            int totalLength = HEADER_LENGTH + sizeof(int) + sizeof(byte);
+            byte[] packet = new byte[totalLength];
+            Array.Copy(CreatePacketHeader(totalLength, C2S_GAME_FINISHED), packet, HEADER_LENGTH);
+            Array.Copy(BitConverter.GetBytes(gameId), 0, packet, HEADER_LENGTH, sizeof(int));
+            packet[HEADER_LENGTH + sizeof(int)] = resultCode;
+            return packet;
         }
     }
 }

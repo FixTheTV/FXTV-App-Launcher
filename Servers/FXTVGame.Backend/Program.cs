@@ -109,6 +109,13 @@ async Task HandleClientAsync(ClientPeer peer)
                             
                         }
                         break;
+                    case Opcodes.C2S_GameFinished:
+                        if (peer.State == ClientState.InGame)
+                        {
+                            await HandleGameFinishedAsync(peer, payloadBuffer);
+                        }
+                        break;
+
                     case Opcodes.C2S_Pong:
                         peer.LastHeartbeat = DateTime.UtcNow;
                         Console.WriteLine($"Received Pong from :User ID {peer.UserId}");
@@ -327,6 +334,86 @@ async Task HandleLobbyReadyAsync(ClientPeer peer, byte[] payloadBuffer)
     }
 }
 
+async Task HandleGameFinishedAsync(ClientPeer peer, byte[] payloadBuffer)
+{
+    if (payloadBuffer.Length < 5)
+    {
+        return;
+    }
+
+    int gameId = BitConverter.ToInt32(payloadBuffer, 0);
+    byte resultCode = payloadBuffer[4];
+    if (resultCode < 1 || resultCode > 3 ||
+        peer.LobbyId != gameId ||
+        !serverData.lobbies.TryGetValue(gameId, out Lobby? lobby))
+    {
+        return;
+    }
+
+    bool allPlayersFinished = false;
+    lock (lobby.SyncRoot)
+    {
+        bool isLobbyMember = false;
+        foreach (ClientPeer? slotPeer in lobby.PeerSlots)
+        {
+            if (slotPeer?.UserId == peer.UserId)
+            {
+                isLobbyMember = true;
+                break;
+            }
+        }
+
+        if (!isLobbyMember || !lobby.HasGameStarted || peer.State != ClientState.InGame)
+        {
+            return;
+        }
+
+        if (!lobby.FinishedPeerIds.Add(peer.UserId))
+        {
+            return;
+        }
+
+        string resultName = resultCode switch
+        {
+            1 => "win",
+            2 => "lose",
+            _ => "draw"
+        };
+        Console.WriteLine($"[Game Finished] Game {gameId}, user {peer.UserId}: {resultName}");
+
+        allPlayersFinished = true;
+        foreach (ClientPeer? slotPeer in lobby.PeerSlots)
+        {
+            if (slotPeer == null || !lobby.FinishedPeerIds.Contains(slotPeer.UserId))
+            {
+                allPlayersFinished = false;
+                break;
+            }
+        }
+
+        if (allPlayersFinished)
+        {
+            foreach (ClientPeer? slotPeer in lobby.PeerSlots)
+            {
+                if (slotPeer != null)
+                {
+                    slotPeer.State = ClientState.InLobby;
+                    slotPeer.IsReady = false;
+                }
+            }
+
+            lobby.FinishedPeerIds.Clear();
+            lobby.HasGameStarted = false;
+        }
+    }
+
+    if (allPlayersFinished)
+    {
+        await BroadcastLobbyTabsAsync(lobby);
+        await BroadcastLobbyChatAsync(lobby, "Server", $"Game {gameId} finished. Players are unready and can ready up again.");
+    }
+}
+
 async Task CheckAllReadyAndStartGame(Lobby lobby)
 {
     List<ClientPeer> playersToStart = new List<ClientPeer>();
@@ -354,6 +441,7 @@ async Task CheckAllReadyAndStartGame(Lobby lobby)
         }
 
         lobby.HasGameStarted = true;
+        lobby.FinishedPeerIds.Clear();
 
         foreach (ClientPeer player in playersToStart)
         {
@@ -361,7 +449,7 @@ async Task CheckAllReadyAndStartGame(Lobby lobby)
         }
     }
 
-    await BroadcastLaunchGameAsync(playersToStart, 1, "123");
+    await BroadcastLaunchGameAsync(playersToStart, lobby.Id, "123");
 }
 
 async Task BroadcastLaunchGameAsync(List<ClientPeer> playersToStart, int gameId, string sessionToken)

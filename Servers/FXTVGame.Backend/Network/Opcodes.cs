@@ -26,6 +26,7 @@ namespace FXTVGame.Backend.Network
         public const ushort S2C_LobbyChat = 2102;
 
         public const ushort C2S_LobbyReady = 1103;
+        public const ushort C2S_GameFinished = 1105;
 
         public const ushort S2C_UpdateLobbyCount = 2103;
         public const ushort S2C_Ping = 2000;
